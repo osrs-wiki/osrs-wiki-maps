@@ -7,12 +7,16 @@ import glob
 import numpy as np
 from collections import defaultdict
 
-version = "../out/mapgen/versions/2024-04-10_a"
+import pprint
 
-with open("%s/worldMapDefinitions.json" % version) as f:
-	defs = json.load(f)
+print(os.path.dirname(os.path.realpath(__file__)))
+version = "./osrs-wiki-maps/out/mapgen/versions/2024-04-10_a"
+print(os.listdir(version))
 
-defs += [
+# with open("%s/worldMapDefinitions.json" % version) as f:
+# 	defs = json.load(f)
+# print(defs)
+defs = [
   {
     "name": "Abandoned Mine - Level 1",
     "regionList": [
@@ -3486,24 +3490,40 @@ defs += [
 with open("%s/minimapIcons.json" % version) as f:
 	icons = json.load(f)
 
+# iconSprites = {}
+# for file in glob.glob("%s/icons/*.png" % version):
+# 	print(file)
+# 	spriteId = int(file.split("/")[-1][:-4])
+# 	iconSprites[spriteId] = Image.open(file)
+
+fileType = "/*.png"
 iconSprites = {}
-for file in glob.glob("%s/icons/*.png" % version):
-	print(file)
-	spriteId = int(file.split("/")[-1][:-4])
+for file in glob.glob(f"{version}/icons/{fileType}"):
+	spriteId = int(os.path.splitext(os.path.basename(file))[0])
 	iconSprites[spriteId] = Image.open(file)
+
 
 overallXLow = 999
 overallXHigh = 0
 overallYLow = 999
 overallYHigh = 0
-for file in glob.glob("%s/tiles/base/*.png" % version):
-	filename = file.split("/")[-1]
-	filename = filename.replace(".png", "")
-	plane, x, y = map(int, filename.split("_"))
+fileType = "/*.png"
+for file in glob.glob(f"{version}/tiles/base/{fileType}"):
+	fileName = os.path.splitext(os.path.basename(file))[0]
+	plane, x, y = map(int, fileName.split("_"))
 	overallYHigh = max(y, overallYHigh)
 	overallYLow = min(y, overallYLow)
 	overallXHigh = max(x, overallXHigh)
 	overallXLow = min(x, overallXLow)
+
+# for file in glob.glob("%s/tiles/base/*.png" % version):
+# 	filename = file.split("/")[-1]
+# 	filename = filename.replace(".png", "")
+# 	plane, x, y = map(int, filename.split("_"))
+# 	overallYHigh = max(y, overallYHigh)
+# 	overallYLow = min(y, overallYLow)
+# 	overallXHigh = max(x, overallXHigh)
+# 	overallXLow = min(x, overallXLow)
 
 defs.append({"name": "debug", "mapId": -1, "regionList": [{"xLowerLeft": overallXLow, "yUpperRight": overallYHigh, "yLowerRight": overallYLow, "yLowerLeft": overallYLow, "numberOfPlanes": 4, "xUpperLeft": overallXLow, "xUpperRight": overallXHigh, "yUpperLeft": overallYHigh, "plane": 0, "xLowerRight": overallXHigh}]})
 

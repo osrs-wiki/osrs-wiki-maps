@@ -31,3 +31,6 @@ replay_pid*
 # input
 data/
 out/
+
+# venv
+venv/

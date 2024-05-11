@@ -24,24 +24,35 @@ public class MapExport {
     private static RegionLoader regionLoader;
     private static String version = "2024-04-10_a";
     public static void main(String[] args) throws Exception {
+        // Optional version arg for saved filenames
         version = args.length > 0 ? args[0] : version;
         Gson gson = new Gson();
+
+        // Loading cache files
         String cache = "./data/cache";
         Store store = new Store(new File(cache));
         store.load();
 
+        // Loading decryption keys
         XteaKeyManager xteaKeyManager = new XteaKeyManager();
         try (FileInputStream fin = new FileInputStream("./data/xteas.json"))
         {
             xteaKeyManager.loadKeys(fin);
         }
 
+        // Generating map tiles, regionwise
+        // A region is a 64x64 game tile area
+        // Each render devotes 4x4 pixels per tile, yielding 256x256 pixel images per region
+        // This avoids any shenanigans with temp files produced by RuneLite's BigBufferedImage implementation
         MapImageDumper dumper = new MapImageDumper(store, xteaKeyManager);
-        dumper.setRenderIcons(false);
-        dumper.load();
+        // Config options (region drawing only includes objects, map layer, and underlay anyway)
+        dumper.setRenderIcons(false); // still need to turn off icons
+        dumper.load(); // process cache data
         regionLoader = new RegionLoader(store, xteaKeyManager);
-        regionLoader.loadRegions();
+        regionLoader.loadRegions(); // load regions from cache data
+        // For each region
         for (Region region : regionLoader.getRegions()) {
+            // Draw the four tiles representing each height
             for (int plane = 0; plane < 4; plane++) {
                 int x = region.getRegionX();
                 int y = region.getRegionY();
@@ -53,6 +64,8 @@ public class MapExport {
                 ImageIO.write(reg, "png", outputfile);
             }
         }
+
+        // Generating map icons and location lists
         String dirname = String.format("./out/mapgen/versions/%s", version);
         String filename = "minimapIcons.json";
         File outputfile = fileWithDirectoryAssurance(dirname, filename);
