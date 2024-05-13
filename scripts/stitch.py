@@ -2507,20 +2507,28 @@ defs += [
     "name": "Sophanem Dungeon",
     "regionList": [
       {
-        "numberOfPlanes": 3,
+        "numberOfPlanes": 1,
         "plane": 0,
-        "yHigh": 144,
-        "xHigh": 51,
-        "xLow": 51,
-        "yLow": 144
+        "yHigh": 67,
+        "xHigh": 35,
+        "xLow": 35,
+        "yLow": 67
       },
       {
-        "numberOfPlanes": 3,
+        "numberOfPlanes": 1,
         "plane": 0,
-        "yHigh": 144,
-        "xHigh": 50,
-        "xLow": 50,
-        "yLow": 144
+        "yHigh": 66,
+        "xHigh": 37,
+        "xLow": 37,
+        "yLow": 66
+      },
+      {
+        "numberOfPlanes": 1,
+        "plane": 2,
+        "yHigh": 68,
+        "xHigh": 33,
+        "xLow": 33,
+        "yLow": 68
       }
     ],
     "fileId": 10143
@@ -3573,7 +3581,9 @@ for defn in defs:
 	lowX, highX, lowY, highY, planes = getBounds(defn['regionList'])
 	bounds = [[lowX * 64 - PADDING, lowY * 64 - PADDING], [(highX + 1) * 64 + PADDING, (highY + 1) * 64 + PADDING]]
 	# bounds = [[0, 0], [12800, 12800]]
-	if 'position' in defn:
+	if mapId < 1:
+		center = [2496, 3328]
+	elif 'position' in defn:
 		center = [defn['position']['x'], defn['position']['y']]
 	else:
 		print('cent')
@@ -3663,7 +3673,8 @@ for defn in defs:
 			scalingFactor = 2.0**zoom/2.0**2
 			zoomedWidth = int(round(scalingFactor * im.width))
 			zoomedHeight = int(round(scalingFactor * im.height))
-			zoomed = im.resize((zoomedWidth, zoomedHeight), resample=Image.BILINEAR)
+			resample = Image.BILINEAR if zoom <= 1 else Image.NEAREST
+			zoomed = im.resize((zoomedWidth, zoomedHeight), resample=resample)
 			if zoom >= 0:
 				for x, y, spriteId in validIcons:
 					sprite = iconSprites[spriteId]
