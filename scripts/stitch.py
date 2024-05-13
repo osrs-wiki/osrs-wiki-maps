@@ -91,7 +91,7 @@ def getIconsInsideArea(plane, lowX, highX, lowY, highY, chunk_lowX=0, chunk_high
 	return valid
 def allBlack(im):
 	data = np.asarray(im.convert('RGBA'))
-	return np.count_nonzero(data[:,:,:3]) == 0
+	return np.all(data[:,:,:3] < 50)
 
 PADDING = 64
 baseMaps = []
