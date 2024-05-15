@@ -7,17 +7,17 @@ from PIL import Image, ImageFilter, ImageEnhance
 
 version = "../out/mapgen/versions/2024-04-10_a"
 
-with open("%s/worldMapDefinitions.json" % version) as f:
+with open(f"{version}/worldMapDefinitions.json") as f:
     defs = json.load(f)
 
 with open("user_world_defs.json") as f:
     defs += json.load(f)
 
-with open("%s/minimapIcons.json" % version) as f:
+with open(f"{version}/minimapIcons.json") as f:
     icons = json.load(f)
 
 iconSprites = {}
-for file in glob.glob("%s/icons/*.png" % version):
+for file in glob.glob(f"{version}/icons/*.png"):
     print(file)
     spriteId = int(file.split("/")[-1][:-4])
     iconSprites[spriteId] = Image.open(file)
@@ -26,7 +26,7 @@ overallXLow = 999
 overallXHigh = 0
 overallYLow = 999
 overallYHigh = 0
-for file in glob.glob("%s/tiles/base/*.png" % version):
+for file in glob.glob(f"{version}/tiles/base/*.png"):
     filename = file.split("/")[-1]
     filename = filename.replace(".png", "")
     plane, x, y = map(int, filename.split("_"))
@@ -91,9 +91,7 @@ def getBounds(regionList):
     return lowX, highX, lowY, highY, planes
 
 
-def pointInsideBox(
-    position, plane, lowX, highX, lowY, highY, chunk_lowX, chunk_highX, chunk_lowY, chunk_highY, allPlanes
-):
+def pointInsideBox(position, plane, lowX, highX, lowY, highY, chunk_lowX, chunk_highX, chunk_lowY, chunk_highY):
     x = position["x"]
     y = position["y"]
     z = position["z"]
@@ -101,38 +99,16 @@ def pointInsideBox(
     lowY = lowY * 64 + chunk_lowY * 8
     highX = highX * 64 + chunk_highX * 8 + 7
     highY = highY * 64 + chunk_highY * 8 + 7
-    return ((plane == 0) or (plane == z)) and x >= lowX and x <= highX and y >= lowY and y <= highY
+    return plane in (0, z) and lowX <= x <= highX and lowY <= y <= highY
 
 
 def getIconsInsideArea(
-    plane,
-    lowX,
-    highX,
-    lowY,
-    highY,
-    chunk_lowX=0,
-    chunk_highX=7,
-    chunk_lowY=0,
-    chunk_highY=7,
-    dx=0,
-    dy=0,
-    dz=0,
-    allPlanes=False,
+    plane, lowX, highX, lowY, highY, chunk_lowX=0, chunk_highX=7, chunk_lowY=0, chunk_highY=7, dx=0, dy=0
 ):
     valid = []
     for icon in icons:
         if pointInsideBox(
-            icon["position"],
-            plane,
-            lowX,
-            highX,
-            lowY,
-            highY,
-            chunk_lowX,
-            chunk_highX,
-            chunk_lowY,
-            chunk_highY,
-            allPlanes,
+            icon["position"], plane, lowX, highX, lowY, highY, chunk_lowX, chunk_highX, chunk_lowY, chunk_highY
         ):
             pos = icon["position"]
             icon = [pos["x"] + dx, pos["y"] + dy, icon["spriteId"]]
@@ -154,11 +130,11 @@ for defn in defs:
         mapId = defn["mapId"]
     elif "fileId" in defn:
         mapId = defn["fileId"]
-        
+
     lowX, highX, lowY, highY, planes = getBounds(defn["regionList"])
     bounds = [[lowX * 64 - PADDING, lowY * 64 - PADDING], [(highX + 1) * 64 + PADDING, (highY + 1) * 64 + PADDING]]
     # bounds = [[0, 0], [12800, 12800]]
-    
+
     if mapId < 1:
         center = [2496, 3328]
     elif "position" in defn:
@@ -166,7 +142,7 @@ for defn in defs:
     else:
         print("cent")
         center = [(lowX + highX + 1) * 32, (lowY + highY + 1) * 32]
-        
+
     baseMaps.append({"mapId": mapId, "name": defn["name"], "bounds": bounds, "center": center})
     overallHeight = (highY - lowY + 1) * px_per_square * 64
     overallWidth = (highX - lowX + 1) * px_per_square * 64
@@ -176,7 +152,7 @@ for defn in defs:
         print(mapId, plane)
         validIcons = []
         im = Image.new("RGB", (overallWidth + 512, overallHeight + 512))
-        
+
         for region in defn["regionList"]:
             if "xLowerLeft" in region:
                 oldLowX = region["xLowerLeft"]
@@ -188,30 +164,20 @@ for defn in defs:
                 newLowY = region["yLowerRight"]
                 newHighY = region["yUpperRight"]
                 print(oldLowX == newLowX, oldLowY == newLowY, oldHighX == newHighX, oldHighY == newHighY)
-                
-                validIcons.extend(
-                    getIconsInsideArea(
-                        region["plane"] + plane, oldLowX, oldHighX, oldLowY, oldHighY, allPlanes=plane == 0
-                    )
-                )
-                
+
+                validIcons.extend(getIconsInsideArea(region["plane"] + plane, oldLowX, oldHighX, oldLowY, oldHighY))
+
                 for x in range(oldLowX, oldHighX + 1):
                     for y in range(oldLowY, oldHighY + 1):
-                        filename = "%s/tiles/base/%s_%s_%s.png" % (version, region["plane"] + plane, x, y)
+                        filename = f"{version}/tiles/base/{region['plane'] + plane}_{x}_{y}.png"
                         if os.path.exists(filename):
                             square = Image.open(filename)
                             imX = (x - lowX + newLowX - oldLowX) * px_per_square * 64
                             imY = (highY - y) * px_per_square * 64
                             im.paste(square, box=(imX + 256, imY + 256))
-                            
+
             elif "chunk_oldXLow" in region:
-                filename = "%s/tiles/base/%s_%s_%s.png" % (
-                    version,
-                    region["oldPlane"] + plane,
-                    region["oldX"],
-                    region["oldY"],
-                )
-                
+                filename = f"{version}/tiles/base/{region['oldPlane'] + plane}_{region['oldX']}_{region['oldY']}.png"
                 dx = (
                     region["newX"] * 64
                     + region["chunk_newXLow"] * 8
@@ -224,8 +190,7 @@ for defn in defs:
                     - region["oldY"] * 64
                     - region["chunk_oldYLow"] * 8
                 )
-                dz = 0 - region["oldPlane"]
-                
+
                 validIcons.extend(
                     getIconsInsideArea(
                         region["oldPlane"] + plane,
@@ -239,11 +204,9 @@ for defn in defs:
                         region["chunk_oldYHigh"],
                         dx,
                         dy,
-                        dz,
-                        allPlanes=plane == 0,
                     )
                 )
-                
+
                 if os.path.exists(filename):
                     square = Image.open(filename)
                     cropped = square.crop(
@@ -259,7 +222,7 @@ for defn in defs:
                         7 - region["chunk_newYHigh"]
                     ) * px_per_square * 8
                     im.paste(cropped, box=(imX + 256, imY + 256))
-                    
+
             elif "chunk_xLow" in region:
                 validIcons.extend(
                     getIconsInsideArea(
@@ -272,17 +235,11 @@ for defn in defs:
                         region["chunk_xHigh"],
                         region["chunk_yLow"],
                         region["chunk_yHigh"],
-                        allPlanes=plane == 0,
                     )
                 )
-                
-                filename = "%s/tiles/base/%s_%s_%s.png" % (
-                    version,
-                    region["plane"] + plane,
-                    region["xLow"],
-                    region["yLow"],
-                )
-                
+
+                filename = f"{version}/tiles/base/{region['plane'] + plane}_{region['xLow']}_{region['yLow']}.png"
+
                 if os.path.exists(filename):
                     square = Image.open(filename)
                     cropped = square.crop(
@@ -298,31 +255,26 @@ for defn in defs:
                         7 - region["chunk_yHigh"]
                     ) * px_per_square * 8
                     im.paste(cropped, box=(imX + 256, imY + 256))
-                    
+
             elif "xLow" in region:
                 validIcons.extend(
                     getIconsInsideArea(
-                        region["plane"] + plane,
-                        region["xLow"],
-                        region["xHigh"],
-                        region["yLow"],
-                        region["yHigh"],
-                        allPlanes=plane == 0,
+                        region["plane"] + plane, region["xLow"], region["xHigh"], region["yLow"], region["yHigh"]
                     )
                 )
-                
+
                 for x in range(region["xLow"], region["xHigh"] + 1):
                     for y in range(region["yLow"], region["yHigh"] + 1):
-                        filename = "%s/tiles/base/%s_%s_%s.png" % (version, region["plane"] + plane, x, y)
+                        filename = f"{version}/tiles/base/{region['plane'] + plane}_{x}_{y}.png"
                         if os.path.exists(filename):
                             square = Image.open(filename)
                             imX = (x - lowX) * px_per_square * 64
                             imY = (highY - y) * px_per_square * 64
                             im.paste(square, box=(imX + 256, imY + 256))
-                            
+
             else:
                 raise ValueError(region)
-            
+
         if plane == 0:
             data = np.asarray(im.convert("RGB")).copy()
             data[(data == (255, 0, 255)).all(axis=-1)] = (0, 0, 0)
@@ -332,7 +284,7 @@ for defn in defs:
                 plane0Map = ImageEnhance.Brightness(plane0Map).enhance(0.7)
                 plane0Map = ImageEnhance.Contrast(plane0Map).enhance(0.8)
                 plane0Map = ImageEnhance.Color(plane0Map).enhance(0.5)
-                
+
         elif plane > 0:
             data = np.asarray(im.convert("RGBA")).copy()
             data[:, :, 3] = 255 * (data[:, :, :3] != (255, 0, 255)).all(axis=-1)
@@ -346,7 +298,7 @@ for defn in defs:
             zoomedHeight = int(round(scalingFactor * im.height))
             resample = Image.BILINEAR if zoom <= 1 else Image.NEAREST
             zoomed = im.resize((zoomedWidth, zoomedHeight), resample=resample)
-            
+
             if zoom >= 0:
                 for x, y, spriteId in validIcons:
                     sprite = iconSprites[spriteId]
@@ -368,15 +320,15 @@ for defn in defs:
                     cropped = zoomed.crop(
                         (coordX, zoomed.size[1] - coordY - 256, coordX + 256, zoomed.size[1] - coordY)
                     )
-                    
+
                     if not allBlack(cropped):
-                        outfilename = "%s/tiles/rendered/%s/%s/%s_%s_%s.png" % (version, mapId, zoom, plane, x, y)
+                        outfilename = f"{version}/tiles/rendered/{mapId}/{zoom}/{plane}_{x}_{y}.png"
                         mkdir_p(outfilename)
                         cropped.save(outfilename)
-                        
+
             # outfilename = "%s/tiles/rendered/%s/%s_%s_full.png" % (version, mapId, plane, zoom)
             # mkdir_p(outfilename)
             # zoomed.save(outfilename)
-            
-with open("%s/basemaps.json" % version, "w") as f:
+
+with open(f"{version}/basemaps.json", "w") as f:
     json.dump(baseMaps, f)
