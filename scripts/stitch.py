@@ -120,7 +120,7 @@ def get_icons_inside_area(
 
 def all_black(im):
     data = np.asarray(im.convert("RGBA"))
-    return np.all(data[:, :, :3] < 50)
+    return np.all(data[:, :, :3] < 20)
 
 
 PADDING = 64
