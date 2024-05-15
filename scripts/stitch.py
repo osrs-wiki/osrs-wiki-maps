@@ -1,6 +1,6 @@
 import json
 import os
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageEnhance
 import os.path
 import errno
 import glob
@@ -185,12 +185,15 @@ for defn in defs:
 			data[(data == (255, 0, 255)).all(axis = -1)] = (0, 0, 0)
 			im = Image.fromarray(data, mode='RGB')
 			if planes > 1:
-				plane0Map = im.convert('LA').filter(ImageFilter.GaussianBlur(radius=5))
+				plane0Map = im.filter(ImageFilter.GaussianBlur(radius=2))
+				plane0Map = ImageEnhance.Brightness(plane0Map).enhance(0.7)
+				plane0Map = ImageEnhance.Contrast(plane0Map).enhance(0.8)
+				plane0Map = ImageEnhance.Color(plane0Map).enhance(0.5)
 		elif plane > 0:
 			data = np.asarray(im.convert('RGBA')).copy()
 			data[:,:,3] = 255*(data[:,:,:3] != (255, 0, 255)).all(axis = -1)
 			mask = Image.fromarray(data, mode='RGBA')
-			im = plane0Map.convert("RGBA")
+			im = plane0Map.copy()
 			im.paste(mask, (0, 0), mask)
 
 		for zoom in range(-3, 4):
