@@ -288,7 +288,12 @@ for defn in defs:
             if planes > 1:
                 plane_0_map = im.filter(ImageFilter.GaussianBlur(radius=2))
                 plane_0_map = ImageEnhance.Brightness(plane_0_map).enhance(0.7)
-                plane_0_map = ImageEnhance.Contrast(plane_0_map).enhance(0.8)
+
+                # decrease contrast
+                intermediate = Image.new("LA", plane0Map.size, 80).convert(plane0Map.mode)
+                plane0Map = Image.blend(intermediate, plane0Map, 0.8)
+                del intermediate
+
                 plane_0_map = ImageEnhance.Color(plane_0_map).enhance(0.5)
 
         elif plane > 0:
