@@ -1,7 +1,18 @@
 ### Build a large image out of the region tiles produced by RuneLite's image dumper
 import glob
+import multiprocessing.dummy
 import os
 from PIL import Image
+import time
+from memory_profiler import profile, memory_usage
+import multiprocessing
+
+# Pyvips on windows is finnicky
+# Windows binaries are required: https://pypi.org/project/pyvips/, https://www.libvips.org/install.html
+LIBVIPS_VERSION = "8.15"
+vipsbin = os.path.join(os.getcwd(), f"vipsbin/vips-dev-{LIBVIPS_VERSION}/bin")
+os.environ['PATH'] = os.pathsep.join((vipsbin, os.environ['PATH']))
+import pyvips as pv
 
 @profile
 def buildCompositeImage():
@@ -16,12 +27,12 @@ def buildCompositeImage():
 
 	# Identify files produced by the dumper
 	fileType = "/*.png"
-	tileImageFilePaths = glob.glob(f"{regionPath}/tiles/base/{fileType}")
+	regionImageFilePaths = glob.glob(f"{regionPath}/tiles/base/{fileType}")
 
 	# Range the image dimensions
 	lowerX = lowerY = MAX_MAP_SIDE_LENGTH
 	upperX = upperY = 0
-	for regionFilePath in tileImageFilePaths:
+	for regionFilePath in regionImageFilePaths:
 		fileName = os.path.splitext(os.path.basename(regionFilePath))[0]
 		plane, x, y = map(int, fileName.split("_")) # Expecting {plane}_{x}_{y}
 		lowerX = min(lowerX, x)
@@ -29,32 +40,34 @@ def buildCompositeImage():
 		upperX = max(upperX, x)
 		upperY = max(upperY, y)
 
-	# Remember there's a fencepost problem here, add one tile length of pixels
-	compositeWidth = (upperX - lowerX + 1) * REGION_TILE_LENGTH * TILE_PIXEL_LENGTH
-	compositeHeight = (upperY - lowerY + 1) * REGION_TILE_LENGTH * TILE_PIXEL_LENGTH
+	# Arrayjoin approach
+	# Need to load in images for ALL tiles to use arrayjoin
+	# This means supplying black images for tiles which are not produced by the region dumper
+	# Arrayjoin executes top to bottom, left to right
+	pool = multiprocessing.dummy.Pool(4)
+	for plane in range(0, PLANE_COUNT):
+		pool.apply_async(assemblePlane, args=(plane, upperX, upperY, lowerX, lowerY, regionPath, regionImageFilePaths, REGION_TILE_LENGTH, TILE_PIXEL_LENGTH, OUTPUT_PATH))
+	pool.close()
+	pool.join()
 
-	# We aren't rendering tiles from (0,0), so find the offset from unused region IDs
-	hOffset = (upperX + 1) * REGION_TILE_LENGTH * TILE_PIXEL_LENGTH - compositeWidth
-	# Image references top left corner as origin, while Jagex uses bottom left so offset by 1 region length
-	vOffset = (upperY) * REGION_TILE_LENGTH * TILE_PIXEL_LENGTH - compositeHeight
-
-	# Push region images into the composites, per plane
-	for planeNum in range(0, PLANE_COUNT):
-		planeImage = Image.new('RGB', (compositeWidth, compositeHeight))
-		for regionFilePath in tileImageFilePaths:
-			fileName = os.path.splitext(os.path.basename(regionFilePath))[0]
-			plane, x, y = map(int, fileName.split("_"))
-			# Transform region data to location in the composite image
-			# Image references top left corner as origin, while Jagex uses bottom left
-			compositeXCoord = (x * REGION_TILE_LENGTH * TILE_PIXEL_LENGTH) - hOffset
-			compositeYCoord = compositeHeight - ((y * REGION_TILE_LENGTH * TILE_PIXEL_LENGTH) - vOffset)
-			# Paste the region image into the composite image
-			regionImage = Image.open(regionFilePath)
-			planeImage.paste(regionImage, (compositeXCoord, compositeYCoord))
-		# Save images
-		if not os.path.exists(OUTPUT_PATH):
-			os.makedirs(OUTPUT_PATH)
-		planeImage.save(os.path.join(OUTPUT_PATH,  f"plane_{planeNum}.png"))
+def assemblePlane(plane, upperX, upperY, lowerX, lowerY, regionPath, regionImageFilePaths, REGION_TILE_LENGTH, TILE_PIXEL_LENGTH, OUTPUT_PATH):
+	# Load in the plane's region images
+	regionArray = list()
+	for regionY in range(upperY, lowerY-1, -1):
+		for regionX in range(lowerX, upperX+1, 1):			
+			targetRegionFileName = os.path.normpath(os.path.join(regionPath, f"{plane}_{regionX}_{regionY}.png")).replace("\\", "/")
+			# If we have an image already just load it in
+			if targetRegionFileName in regionImageFilePaths:
+				regionArray.append(pv.Image.new_from_file(targetRegionFileName))
+			else:
+				# Otherwise, provide a blank image
+				regionArray.append(pv.Image.black(REGION_TILE_LENGTH * TILE_PIXEL_LENGTH, REGION_TILE_LENGTH * TILE_PIXEL_LENGTH))
+	# Join the region images and write the result to file
+	planeImage = pv.Image.arrayjoin(regionArray, across=(upperX-lowerX+1))
+	planeImage.write_to_file(os.path.join(OUTPUT_PATH, f"plane_{plane}.png"))
 
 if __name__ == "__main__":
-	buildCompositeImage()
+	startTime = time.time()
+	# buildCompositeImage()
+	print(f"Peak memory usage: {max(memory_usage(proc=buildCompositeImage))}")
+	print(f"Runtime: {time.time()-startTime}")
