@@ -1,11 +1,10 @@
 ### Build a large image out of the region tiles produced by RuneLite's image dumper
 import glob
-import multiprocessing.dummy
 import os
 from PIL import Image
 import time
 from memory_profiler import profile, memory_usage
-import multiprocessing
+import multiprocessing.dummy
 
 # Pyvips on windows is finnicky
 # Windows binaries are required: https://pypi.org/project/pyvips/, https://www.libvips.org/install.html
@@ -18,7 +17,7 @@ import pyvips as pv
 def buildCompositeImage():
 	### Configure this before running the script
 	VERSION = "2024-04-10_a"
-	regionPath = f"./osrs-wiki-maps/out/mapgen/versions/{VERSION}"
+	regionPath = f"./osrs-wiki-maps/out/mapgen/versions/{VERSION}/tiles/base"
 	OUTPUT_PATH = f"./osrs-wiki-maps/out/mapgen/versions/{VERSION}/composites"
 	REGION_TILE_LENGTH = 64
 	TILE_PIXEL_LENGTH = 4
@@ -27,7 +26,7 @@ def buildCompositeImage():
 
 	# Identify files produced by the dumper
 	fileType = "/*.png"
-	regionImageFilePaths = glob.glob(f"{regionPath}/tiles/base/{fileType}")
+	regionImageFilePaths = [os.path.normpath(path).replace("\\","/") for path in glob.glob(f"{regionPath}{fileType}")]
 
 	# Range the image dimensions
 	lowerX = lowerY = MAX_MAP_SIDE_LENGTH
@@ -41,6 +40,7 @@ def buildCompositeImage():
 		upperY = max(upperY, y)
 
 	def assemblePlane(plane):
+		print(f"Assembling plane {plane}: {time.time()-startTime}")
 		# Load in the plane's region images
 		regionArray = list()
 		for regionY in range(upperY, lowerY-1, -1):
@@ -56,11 +56,8 @@ def buildCompositeImage():
 		planeImage = pv.Image.arrayjoin(regionArray, across=(upperX-lowerX+1))
 		planeImage.write_to_file(os.path.join(OUTPUT_PATH, f"plane_{plane}.png"))
 
-	# Arrayjoin approach
-	# Need to load in images for ALL tiles to use arrayjoin
-	# This means supplying black images for tiles which are not produced by the region dumper
-	# Arrayjoin executes top to bottom, left to right
-	pool = multiprocessing.dummy.Pool(4)
+	# Assign one core per plane image
+	pool = multiprocessing.dummy.Pool(PLANE_COUNT)
 	pool.map(assemblePlane, range(0, PLANE_COUNT))
 	pool.close()
 	pool.join()
