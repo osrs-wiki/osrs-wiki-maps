@@ -40,31 +40,30 @@ def buildCompositeImage():
 		upperX = max(upperX, x)
 		upperY = max(upperY, y)
 
+	def assemblePlane(plane):
+		# Load in the plane's region images
+		regionArray = list()
+		for regionY in range(upperY, lowerY-1, -1):
+			for regionX in range(lowerX, upperX+1, 1):			
+				targetRegionFileName = os.path.normpath(os.path.join(regionPath, f"{plane}_{regionX}_{regionY}.png")).replace("\\", "/")
+				# If we have an image already just load it in
+				if targetRegionFileName in regionImageFilePaths:
+					regionArray.append(pv.Image.new_from_file(targetRegionFileName))
+				else:
+					# Otherwise, provide a blank image
+					regionArray.append(pv.Image.black(REGION_TILE_LENGTH * TILE_PIXEL_LENGTH, REGION_TILE_LENGTH * TILE_PIXEL_LENGTH))
+		# Join the region images and write the result to file
+		planeImage = pv.Image.arrayjoin(regionArray, across=(upperX-lowerX+1))
+		planeImage.write_to_file(os.path.join(OUTPUT_PATH, f"plane_{plane}.png"))
+
 	# Arrayjoin approach
 	# Need to load in images for ALL tiles to use arrayjoin
 	# This means supplying black images for tiles which are not produced by the region dumper
 	# Arrayjoin executes top to bottom, left to right
 	pool = multiprocessing.dummy.Pool(4)
-	for plane in range(0, PLANE_COUNT):
-		pool.apply_async(assemblePlane, args=(plane, upperX, upperY, lowerX, lowerY, regionPath, regionImageFilePaths, REGION_TILE_LENGTH, TILE_PIXEL_LENGTH, OUTPUT_PATH))
+	pool.map(assemblePlane, range(0, PLANE_COUNT))
 	pool.close()
 	pool.join()
-
-def assemblePlane(plane, upperX, upperY, lowerX, lowerY, regionPath, regionImageFilePaths, REGION_TILE_LENGTH, TILE_PIXEL_LENGTH, OUTPUT_PATH):
-	# Load in the plane's region images
-	regionArray = list()
-	for regionY in range(upperY, lowerY-1, -1):
-		for regionX in range(lowerX, upperX+1, 1):			
-			targetRegionFileName = os.path.normpath(os.path.join(regionPath, f"{plane}_{regionX}_{regionY}.png")).replace("\\", "/")
-			# If we have an image already just load it in
-			if targetRegionFileName in regionImageFilePaths:
-				regionArray.append(pv.Image.new_from_file(targetRegionFileName))
-			else:
-				# Otherwise, provide a blank image
-				regionArray.append(pv.Image.black(REGION_TILE_LENGTH * TILE_PIXEL_LENGTH, REGION_TILE_LENGTH * TILE_PIXEL_LENGTH))
-	# Join the region images and write the result to file
-	planeImage = pv.Image.arrayjoin(regionArray, across=(upperX-lowerX+1))
-	planeImage.write_to_file(os.path.join(OUTPUT_PATH, f"plane_{plane}.png"))
 
 if __name__ == "__main__":
 	startTime = time.time()
