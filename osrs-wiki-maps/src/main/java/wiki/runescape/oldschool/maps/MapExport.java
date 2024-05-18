@@ -2,9 +2,10 @@ package wiki.runescape.oldschool.maps;
 
 
 import net.runelite.cache.*;
-import net.runelite.cache.definitions.AreaDefinition;
-import net.runelite.cache.definitions.ObjectDefinition;
-import net.runelite.cache.definitions.SpriteDefinition;
+import net.runelite.cache.definitions.WorldMapCompositeDefinition;
+import net.runelite.cache.definitions.ZoneDefinition;
+import net.runelite.cache.definitions.MapSquareDefinition;
+import net.runelite.cache.definitions.loaders.WorldMapCompositeLoader;
 import net.runelite.cache.fs.*;
 import net.runelite.cache.region.Location;
 import net.runelite.cache.region.Region;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public class MapExport {
     private static RegionLoader regionLoader;
-    private static String version = "2024-04-10_a";
+    private static String version = "2024-05-15_c";
     public static void main(String[] args) throws Exception {
         version = args.length > 0 ? args[0] : version;
         Gson gson = new Gson();
@@ -38,21 +39,19 @@ public class MapExport {
 
         MapImageDumper dumper = new MapImageDumper(store, xteaKeyManager);
         dumper.setRenderIcons(false);
+        dumper.setLowMemory(false);
+        dumper.setRenderLabels(false);
         dumper.load();
-        regionLoader = new RegionLoader(store, xteaKeyManager);
-        regionLoader.loadRegions();
-        for (Region region : regionLoader.getRegions()) {
-            for (int plane = 0; plane < 4; plane++) {
-                int x = region.getRegionX();
-                int y = region.getRegionY();
-                BufferedImage reg = dumper.drawRegion(region, plane);
-                String dirname = String.format("./out/mapgen/versions/%s/tiles/base", version);
-                String filename = String.format("%s_%s_%s.png", plane, x, y);
-                File outputfile = fileWithDirectoryAssurance(dirname, filename);
-                System.out.println(outputfile);
-                ImageIO.write(reg, "png", outputfile);
-            }
+
+        for (int plane = 0; plane < 4; plane++) {
+            BufferedImage image = dumper.drawMap(plane);
+            String dirname = String.format("./out/mapgen/versions/%s/tiles/base", version);
+            String filename = String.format("plane_%s.png", plane);
+            File outputfile = fileWithDirectoryAssurance(dirname, filename);
+            System.out.println(outputfile);
+            ImageIO.write(image, "png", outputfile);
         }
+
         String dirname = String.format("./out/mapgen/versions/%s", version);
         String filename = "minimapIcons.json";
         File outputfile = fileWithDirectoryAssurance(dirname, filename);
@@ -61,6 +60,36 @@ public class MapExport {
         String json = gson.toJson(icons);
         out.write(json);
         out.close();
+
+        Index index = store.getIndex(IndexType.WORLDMAP);
+        Archive archive = index.getArchive(1);
+        Storage storage = store.getStorage();
+        byte[] archiveData = storage.loadArchive(archive);
+        ArchiveFiles files = archive.getFiles(archiveData);
+
+        WorldMapCompositeLoader loader = new WorldMapCompositeLoader();
+
+        for (FSFile file : files.getFiles()) {
+            WorldMapCompositeDefinition wmd = loader.load(file.getContents());
+            int mapid = file.getFileId();
+
+            List<MapSquareDefinition> mapSquareDefinitions = new ArrayList<>(wmd.getMapSquareDefinitions());
+            List<ZoneDefinition> zoneDefinitions = new ArrayList<>(wmd.getZoneDefinitions());
+
+            String msFilename = String.format("mapSquareDefinitions_%s.json", mapid);
+            outputfile = fileWithDirectoryAssurance(dirname, msFilename);
+            out = new PrintWriter(outputfile);
+            json = gson.toJson(mapSquareDefinitions);
+            out.write(json);
+            out.close();
+
+            String zFilename = String.format("zoneDefinitions_%s.json", mapid);
+            outputfile = fileWithDirectoryAssurance(dirname, zFilename);
+            out = new PrintWriter(outputfile);
+            json = gson.toJson(zoneDefinitions);
+            out.write(json);
+            out.close();
+        }
     }
 
     private static File fileWithDirectoryAssurance(String directory, String filename) {
