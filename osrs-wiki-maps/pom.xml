@@ -15,6 +15,7 @@
 		<dependency>
 			<groupId>net.runelite</groupId>
 			<artifactId>cache</artifactId>
+			<version>1.10.31-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
