@@ -2,9 +2,7 @@ package wiki.runescape.oldschool.maps;
 
 
 import net.runelite.cache.*;
-import net.runelite.cache.definitions.WorldMapCompositeDefinition;
-import net.runelite.cache.definitions.ZoneDefinition;
-import net.runelite.cache.definitions.MapSquareDefinition;
+import net.runelite.cache.definitions.*;
 import net.runelite.cache.definitions.loaders.WorldMapCompositeLoader;
 import net.runelite.cache.fs.*;
 import net.runelite.cache.region.Location;
