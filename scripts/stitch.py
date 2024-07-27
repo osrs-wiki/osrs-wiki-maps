@@ -10,6 +10,9 @@ PX_PER_TILE = 4
 
 
 def debug_defn(tile_path):
+    """
+    Create a fake worldMapDefinition for debug (-1) map based on base image names RL
+    """
     x_coords = set()
     y_coords = set()
     for file in os.listdir(tile_path):
@@ -41,6 +44,9 @@ def debug_defn(tile_path):
 
 
 def load_defs(cache_defs, user_defs, base_tiles):
+    """
+    Load worldMapDefinitions + user-defined defns + debug defn
+    """
     with open(cache_defs) as f:
         defs = {int(d["fileId"]): d for d in json.load(f)}
 
@@ -58,6 +64,9 @@ def load_defs(cache_defs, user_defs, base_tiles):
 
 
 def load_icons(icons_path):
+    """
+    Get list of minimapIcons definitions (x, y, z, and sprite id)
+    """
     with open(icons_path) as f:
         icons = json.load(f)
 
@@ -65,6 +74,9 @@ def load_icons(icons_path):
 
 
 def load_sprites(icons_dir):
+    """
+    Get dict of {sprite id: sprite image}
+    """
     icon_sprites = {}
     for file in glob.glob(f"{icons_dir}/*.png"):
         sprite_id = int(file.split(os.sep)[-1][:-4])
@@ -74,6 +86,9 @@ def load_sprites(icons_dir):
 
 
 def load_basemap(defn):
+    """
+    Get basemap dict for this map id, for telling wiki the bounds + center + name of this map
+    """
     map_name = defn["name"]
     map_id = defn["fileId"]
     map_low_x, map_high_x, map_low_y, map_high_y, _ = get_bounds(defn["regionList"])
@@ -94,6 +109,9 @@ def load_basemap(defn):
 
 
 def mkdir_p(path):
+    """
+    Create directory (before writing file into it, in case of permissions issues)
+    """
     try:
         os.makedirs(os.path.dirname(path))
     except OSError:
@@ -101,6 +119,9 @@ def mkdir_p(path):
 
 
 def get_bounds(region_list):
+    """
+    Get bounding box (cube?) for this map id
+    """
     low_x, low_y, high_x, high_y = 9999, 9999, 0, 0
     planes = 0
     for region in region_list:
@@ -130,6 +151,9 @@ def get_bounds(region_list):
 def point_inside_box(
     position, plane, low_x, high_x, low_y, high_y, chunk_low_x, chunk_high_x, chunk_low_y, chunk_high_y
 ):
+    """
+    Check if map icon is inside given area
+    """
     x = position["x"]
     y = position["y"]
     z = position["z"]
@@ -154,6 +178,9 @@ def get_icons_inside_area(
     dx=0,
     dy=0,
 ):
+    """
+    Get all map icons inside an area's old position (where it appears on debug map)
+    """
     valid = []
     for icon in icons:
         if point_inside_box(
@@ -166,6 +193,9 @@ def get_icons_inside_area(
 
 
 def make_plane_0_map(image):
+    """
+    Get blurry + grey-ish plane 0 for rendering beneath upper planes
+    """
     plane_0_map = image.filter(ImageFilter.GaussianBlur(radius=2))
     plane_0_map = ImageEnhance.Brightness(plane_0_map).enhance(0.7)
 
@@ -179,11 +209,17 @@ def make_plane_0_map(image):
 
 
 def all_black(im):
+    """
+    Check if image is completely black; note jagex uses RGB(2,6,6) sometimes instead of (0,0,0)
+    """
     data = np.asarray(im.convert("RGBA"))
     return np.all(data[:, :, :3] < 7)
 
 
 def render_region(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    """
+    Determine WorldMapType of a region definition and render accordingly
+    """
     if "xLowerLeft" in region:
         return render_type_1(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y)
 
@@ -201,6 +237,9 @@ def render_region(plane, region, icons, plane_image, base_tiles_dir, map_low_x, 
 
 
 def render_type_0(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    """
+    Render WorldMapType0 (selected squares + zones rendered in-place)
+    """
     old_plane = region["plane"] + plane
 
     area_icons = get_icons_inside_area(
@@ -235,6 +274,9 @@ def render_type_0(plane, region, icons, plane_image, base_tiles_dir, map_low_x, 
 
 
 def render_type_1(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    """
+    Render WorldMapType1 area (selected squares rendered in-place)
+    """
     old_plane = region["plane"] + plane
 
     old_low_x = region["xLowerLeft"]
@@ -267,6 +309,9 @@ def render_type_1(plane, region, icons, plane_image, base_tiles_dir, map_low_x, 
 
 
 def render_type_2(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    """
+    Render WorldMapType2 area (selected squares rendered in-place, equivalent to type 1?)
+    """
     old_plane = region["plane"] + plane
 
     area_icons = get_icons_inside_area(
@@ -291,6 +336,9 @@ def render_type_2(plane, region, icons, plane_image, base_tiles_dir, map_low_x, 
 
 
 def render_type_3(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    """
+    Render WorldMapType3 area (selected square or zone-subset of a square to translate)
+    """
     old_plane = region["oldPlane"] + plane
 
     in_path = os.path.join(base_tiles_dir, f"{old_plane}_{region['oldX']}_{region['oldY']}.png")
@@ -332,6 +380,9 @@ def render_type_3(plane, region, icons, plane_image, base_tiles_dir, map_low_x, 
 
 
 def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir):
+    """
+    render and save images for this map id to "out/mapgen/versions/#/tiles/rendered"
+    """
     map_low_x, map_high_x, map_low_y, map_high_y, planes = get_bounds(defn["regionList"])
 
     map_height = (map_high_y - map_low_y + 1) * PX_PER_TILE * 64
