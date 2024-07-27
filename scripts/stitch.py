@@ -67,16 +67,20 @@ def load_icons(icons_path):
 def load_sprites(icons_dir):
     icon_sprites = {}
     for file in glob.glob(f"{icons_dir}/*.png"):
-        sprite_id = int(file.split("/")[-1][:-4])
+        sprite_id = int(file.split(os.sep)[-1][:-4])
         icon_sprites[sprite_id] = Image.open(file)
 
     return icon_sprites
 
 
-def load_basemap(map_id, map_name, low_x, high_x, low_y, high_y, defn):
+def load_basemap(defn):
+    map_name = defn["name"]
+    map_id = defn["fileId"]
+    map_low_x, map_high_x, map_low_y, map_high_y, _ = get_bounds(defn["regionList"])
+
     bounds = [
-        [low_x * 64 - PADDING, low_y * 64 - PADDING],
-        [(high_x + 1) * 64 + PADDING, (high_y + 1) * 64 + PADDING],
+        [map_low_x * 64 - PADDING, map_low_y * 64 - PADDING],
+        [(map_high_x + 1) * 64 + PADDING, (map_high_y + 1) * 64 + PADDING],
     ]
 
     if map_id < 1:
@@ -84,7 +88,7 @@ def load_basemap(map_id, map_name, low_x, high_x, low_y, high_y, defn):
     elif "position" in defn:
         center = [defn["position"]["x"], defn["position"]["y"]]
     else:
-        center = [(low_x + high_x + 1) * 32, (low_y + high_y + 1) * 32]
+        center = [(map_low_x + map_high_x + 1) * 32, (map_low_y + map_high_y + 1) * 32]
 
     return {"mapId": map_id, "name": map_name, "bounds": bounds, "center": center}
 
@@ -100,7 +104,7 @@ def get_bounds(region_list):
     low_x, low_y, high_x, high_y = 9999, 9999, 0, 0
     planes = 0
     for region in region_list:
-        if "xLowerLeft" in region:  # typeA
+        if "xLowerLeft" in region:
             low_x = min(low_x, region["xUpperLeft"])
             high_x = max(high_x, region["xUpperRight"])
             low_y = min(low_y, region["yLowerLeft"])
@@ -176,17 +180,162 @@ def make_plane_0_map(image):
 
 def all_black(im):
     data = np.asarray(im.convert("RGBA"))
-    return np.all(data[:, :, :3]) < 7
+    return np.all(data[:, :, :3] < 7)
+
+
+def render_region(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    if "xLowerLeft" in region:
+        return render_type_1(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y)
+
+    elif "chunk_oldXLow" in region:
+        return render_type_3(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y)
+
+    elif "chunk_xLow" in region:
+        return render_type_0(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y)
+
+    elif "xLow" in region:
+        return render_type_2(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y)
+
+    else:
+        raise ValueError(region)
+
+
+def render_type_0(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    old_plane = region["plane"] + plane
+
+    area_icons = get_icons_inside_area(
+        icons,
+        old_plane,
+        region["xLow"],
+        region["xHigh"],
+        region["yLow"],
+        region["yHigh"],
+        region["chunk_xLow"],
+        region["chunk_xHigh"],
+        region["chunk_yLow"],
+        region["chunk_yHigh"],
+    )
+    in_path = os.path.join(base_tiles_dir, f"{old_plane}_{region['xLow']}_{region['yLow']}.png")
+
+    if os.path.exists(in_path):
+        mapsquare_image = Image.open(in_path)
+        cropped = mapsquare_image.crop(
+            (
+                region["chunk_xLow"] * PX_PER_TILE * 8,
+                (8 - region["chunk_yHigh"] - 1) * PX_PER_TILE * 8,
+                (region["chunk_xHigh"] + 1) * PX_PER_TILE * 8,
+                (8 - region["chunk_yLow"]) * PX_PER_TILE * 8,
+            )
+        )
+        mapsquare_x = (region["xLow"] - map_low_x) * PX_PER_TILE * 64 + region["chunk_xLow"] * PX_PER_TILE * 8
+        mapsquare_y = (map_high_y - region["yLow"]) * PX_PER_TILE * 64 + (7 - region["chunk_yHigh"]) * PX_PER_TILE * 8
+        plane_image.paste(cropped, box=(mapsquare_x + 256, mapsquare_y + 256))
+
+    return plane_image, area_icons
+
+
+def render_type_1(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    old_plane = region["plane"] + plane
+
+    old_low_x = region["xLowerLeft"]
+    old_high_x = region["xLowerRight"]
+    old_low_y = region["yLowerLeft"]
+    old_high_y = region["yUpperLeft"]
+    new_low_x = region["xUpperLeft"]
+    # new_high_x = region["xUpperRight"]  # why aren't these used?
+    # new_low_y = region["yLowerRight"]  # ^
+    # new_high_y = region["yUpperRight"]  # ^
+    # print(
+    #     old_low_x == new_low_x,
+    #     old_low_y == new_low_y,
+    #     old_high_x == new_high_x,
+    #     old_high_y == new_high_y,
+    # )
+
+    area_icons = get_icons_inside_area(icons, old_plane, old_low_x, old_high_x, old_low_y, old_high_y)
+
+    for x in range(old_low_x, old_high_x + 1):
+        for y in range(old_low_y, old_high_y + 1):
+            in_path = os.path.join(base_tiles_dir, f"{old_plane}_{x}_{y}.png")
+            if os.path.exists(in_path):
+                mapsquare_image = Image.open(in_path)
+                mapsquare_x = (x - map_low_x + new_low_x - old_low_x) * PX_PER_TILE * 64
+                mapsquare_y = (map_high_y - y) * PX_PER_TILE * 64
+                plane_image.paste(mapsquare_image, box=(mapsquare_x + 256, mapsquare_y + 256))
+
+    return plane_image, area_icons
+
+
+def render_type_2(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    old_plane = region["plane"] + plane
+
+    area_icons = get_icons_inside_area(
+        icons,
+        old_plane,
+        region["xLow"],
+        region["xHigh"],
+        region["yLow"],
+        region["yHigh"],
+    )
+
+    for x in range(region["xLow"], region["xHigh"] + 1):
+        for y in range(region["yLow"], region["yHigh"] + 1):
+            in_path = os.path.join(base_tiles_dir, f"{old_plane}_{x}_{y}.png")
+            if os.path.exists(in_path):
+                mapsquare_image = Image.open(in_path)
+                mapsquare_x = (x - map_low_x) * PX_PER_TILE * 64
+                mapsquare_y = (map_high_y - y) * PX_PER_TILE * 64
+                plane_image.paste(mapsquare_image, box=(mapsquare_x + 256, mapsquare_y + 256))
+
+    return plane_image, area_icons
+
+
+def render_type_3(plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y):
+    old_plane = region["oldPlane"] + plane
+
+    in_path = os.path.join(base_tiles_dir, f"{old_plane}_{region['oldX']}_{region['oldY']}.png")
+    dx = region["newX"] * 64 + region["chunk_newXLow"] * 8 - region["oldX"] * 64 - region["chunk_oldXLow"] * 8
+    dy = region["newY"] * 64 + region["chunk_newYLow"] * 8 - region["oldY"] * 64 - region["chunk_oldYLow"] * 8
+
+    area_icons = get_icons_inside_area(
+        icons,
+        old_plane,
+        region["oldX"],
+        region["oldX"],
+        region["oldY"],
+        region["oldY"],
+        region["chunk_oldXLow"],
+        region["chunk_oldXHigh"],
+        region["chunk_oldYLow"],
+        region["chunk_oldYHigh"],
+        dx,
+        dy,
+    )
+
+    if os.path.exists(in_path):
+        mapsquare_image = Image.open(in_path)
+        cropped = mapsquare_image.crop(
+            (
+                region["chunk_oldXLow"] * PX_PER_TILE * 8,
+                (8 - region["chunk_oldYHigh"] - 1) * PX_PER_TILE * 8,
+                (region["chunk_oldXHigh"] + 1) * PX_PER_TILE * 8,
+                (8 - region["chunk_oldYLow"]) * PX_PER_TILE * 8,
+            )
+        )
+        mapsquare_x = (region["newX"] - map_low_x) * PX_PER_TILE * 64 + region["chunk_newXLow"] * PX_PER_TILE * 8
+        mapsquare_y = (map_high_y - region["newY"]) * PX_PER_TILE * 64 + (
+            7 - region["chunk_newYHigh"]
+        ) * PX_PER_TILE * 8
+        plane_image.paste(cropped, box=(mapsquare_x + 256, mapsquare_y + 256))
+
+    return plane_image, area_icons
 
 
 def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir):
-    map_name = defn["name"]
-    low_x, high_x, low_y, high_y, planes = get_bounds(defn["regionList"])
+    map_low_x, map_high_x, map_low_y, map_high_y, planes = get_bounds(defn["regionList"])
 
-    basemap = load_basemap(map_id, map_name, low_x, high_x, low_y, high_y, defn)
-
-    map_height = (high_y - low_y + 1) * PX_PER_TILE * 64
-    map_width = (high_x - low_x + 1) * PX_PER_TILE * 64
+    map_height = (map_high_y - map_low_y + 1) * PX_PER_TILE * 64
+    map_width = (map_high_x - map_low_x + 1) * PX_PER_TILE * 64
 
     plane_0_map = None
     for plane in range(planes):
@@ -195,149 +344,10 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
         plane_image = Image.new("RGB", (map_width + 512, map_height + 512))
 
         for region in defn["regionList"]:
-            if "xLowerLeft" in region:
-                old_plane = region["plane"] + plane
-
-                old_low_x = region["xLowerLeft"]
-                old_high_x = region["xLowerRight"]
-                old_low_y = region["yLowerLeft"]
-                old_high_y = region["yUpperLeft"]
-                new_low_x = region["xUpperLeft"]
-                new_high_x = region["xUpperRight"]  # why aren't these used?
-                new_low_y = region["yLowerRight"]  # ^
-                new_high_y = region["yUpperRight"]  # ^
-                print(
-                    old_low_x == new_low_x,
-                    old_low_y == new_low_y,
-                    old_high_x == new_high_x,
-                    old_high_y == new_high_y,
-                )
-
-                valid_icons.extend(
-                    get_icons_inside_area(icons, old_plane, old_low_x, old_high_x, old_low_y, old_high_y)
-                )
-
-                for x in range(old_low_x, old_high_x + 1):
-                    for y in range(old_low_y, old_high_y + 1):
-                        in_path = os.path.join(base_tiles_dir, f"{old_plane}_{x}_{y}.png")
-                        if os.path.exists(in_path):
-                            mapsquare_image = Image.open(in_path)
-                            mapsquare_x = (x - low_x + new_low_x - old_low_x) * PX_PER_TILE * 64
-                            mapsquare_y = (high_y - y) * PX_PER_TILE * 64
-                            plane_image.paste(mapsquare_image, box=(mapsquare_x + 256, mapsquare_y + 256))
-
-            elif "chunk_oldXLow" in region:
-                old_plane = region["oldPlane"] + plane
-
-                in_path = os.path.join(base_tiles_dir, f"{old_plane}_{region['oldX']}_{region['oldY']}.png")
-                dx = (
-                    region["newX"] * 64
-                    + region["chunk_newXLow"] * 8
-                    - region["oldX"] * 64
-                    - region["chunk_oldXLow"] * 8
-                )
-                dy = (
-                    region["newY"] * 64
-                    + region["chunk_newYLow"] * 8
-                    - region["oldY"] * 64
-                    - region["chunk_oldYLow"] * 8
-                )
-
-                valid_icons.extend(
-                    get_icons_inside_area(
-                        icons,
-                        old_plane,
-                        region["oldX"],
-                        region["oldX"],
-                        region["oldY"],
-                        region["oldY"],
-                        region["chunk_oldXLow"],
-                        region["chunk_oldXHigh"],
-                        region["chunk_oldYLow"],
-                        region["chunk_oldYHigh"],
-                        dx,
-                        dy,
-                    )
-                )
-
-                if os.path.exists(in_path):
-                    mapsquare_image = Image.open(in_path)
-                    cropped = mapsquare_image.crop(
-                        (
-                            region["chunk_oldXLow"] * PX_PER_TILE * 8,
-                            (8 - region["chunk_oldYHigh"] - 1) * PX_PER_TILE * 8,
-                            (region["chunk_oldXHigh"] + 1) * PX_PER_TILE * 8,
-                            (8 - region["chunk_oldYLow"]) * PX_PER_TILE * 8,
-                        )
-                    )
-                    mapsquare_x = (region["newX"] - low_x) * PX_PER_TILE * 64 + region[
-                        "chunk_newXLow"
-                    ] * PX_PER_TILE * 8
-                    mapsquare_y = (high_y - region["newY"]) * PX_PER_TILE * 64 + (
-                        7 - region["chunk_newYHigh"]
-                    ) * PX_PER_TILE * 8
-                    plane_image.paste(cropped, box=(mapsquare_x + 256, mapsquare_y + 256))
-
-            elif "chunk_xLow" in region:
-                old_plane = region["plane"] + plane
-
-                valid_icons.extend(
-                    get_icons_inside_area(
-                        icons,
-                        old_plane,
-                        region["xLow"],
-                        region["xHigh"],
-                        region["yLow"],
-                        region["yHigh"],
-                        region["chunk_xLow"],
-                        region["chunk_xHigh"],
-                        region["chunk_yLow"],
-                        region["chunk_yHigh"],
-                    )
-                )
-                in_path = os.path.join(base_tiles_dir, f"{old_plane}_{region['xLow']}_{region['yLow']}.png")
-
-                if os.path.exists(in_path):
-                    mapsquare_image = Image.open(in_path)
-                    cropped = mapsquare_image.crop(
-                        (
-                            region["chunk_xLow"] * PX_PER_TILE * 8,
-                            (8 - region["chunk_yHigh"] - 1) * PX_PER_TILE * 8,
-                            (region["chunk_xHigh"] + 1) * PX_PER_TILE * 8,
-                            (8 - region["chunk_yLow"]) * PX_PER_TILE * 8,
-                        )
-                    )
-                    mapsquare_x = (region["xLow"] - low_x) * PX_PER_TILE * 64 + region["chunk_xLow"] * PX_PER_TILE * 8
-                    mapsquare_y = (high_y - region["yLow"]) * PX_PER_TILE * 64 + (
-                        7 - region["chunk_yHigh"]
-                    ) * PX_PER_TILE * 8
-                    plane_image.paste(cropped, box=(mapsquare_x + 256, mapsquare_y + 256))
-
-            elif "xLow" in region:
-                old_plane = region["plane"] + plane
-
-                valid_icons.extend(
-                    get_icons_inside_area(
-                        icons,
-                        old_plane,
-                        region["xLow"],
-                        region["xHigh"],
-                        region["yLow"],
-                        region["yHigh"],
-                    )
-                )
-
-                for x in range(region["xLow"], region["xHigh"] + 1):
-                    for y in range(region["yLow"], region["yHigh"] + 1):
-                        in_path = os.path.join(base_tiles_dir, f"{old_plane}_{x}_{y}.png")
-                        if os.path.exists(in_path):
-                            mapsquare_image = Image.open(in_path)
-                            mapsquare_x = (x - low_x) * PX_PER_TILE * 64
-                            mapsquare_y = (high_y - y) * PX_PER_TILE * 64
-                            plane_image.paste(mapsquare_image, box=(mapsquare_x + 256, mapsquare_y + 256))
-
-            else:
-                raise ValueError(region)
+            plane_image, area_icons = render_region(
+                plane, region, icons, plane_image, base_tiles_dir, map_low_x, map_high_y
+            )
+            valid_icons.extend(area_icons)
 
         if plane == 0:
             data = np.asarray(plane_image.convert("RGB")).copy()
@@ -364,8 +374,10 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
                 for x, y, sprite_id in valid_icons:
                     sprite = icon_sprites[sprite_id]
                     width, height = sprite.size
-                    mapsquare_x = int(round((x - low_x * 64) * PX_PER_TILE * scaling_factor)) - width // 2 - 2
-                    mapsquare_y = int(round(((high_y + 1) * 64 - y) * PX_PER_TILE * scaling_factor)) - height // 2 - 2
+                    mapsquare_x = int(round((x - map_low_x * 64) * PX_PER_TILE * scaling_factor)) - width // 2 - 2
+                    mapsquare_y = (
+                        int(round(((map_high_y + 1) * 64 - y) * PX_PER_TILE * scaling_factor)) - height // 2 - 2
+                    )
                     zoomed.paste(
                         sprite,
                         (
@@ -375,14 +387,14 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
                         sprite,
                     )
 
-            low_zoomed_x = int((low_x - 1) * scaling_factor + 0.01)
-            high_zoomed_x = int((high_x + 0.9 + 1) * scaling_factor + 0.01)
-            low_zoomed_y = int((low_y - 1) * scaling_factor + 0.01)
-            high_zoomed_y = int((high_y + 0.9 + 1) * scaling_factor + 0.01)
+            low_zoomed_x = int((map_low_x - 1) * scaling_factor + 0.01)
+            high_zoomed_x = int((map_high_x + 0.9 + 1) * scaling_factor + 0.01)
+            low_zoomed_y = int((map_low_y - 1) * scaling_factor + 0.01)
+            high_zoomed_y = int((map_high_y + 0.9 + 1) * scaling_factor + 0.01)
             for x in range(low_zoomed_x, high_zoomed_x + 1):
                 for y in range(low_zoomed_y, high_zoomed_y + 1):
-                    coord_x = int((x - (low_x - 1) * scaling_factor) * 256)
-                    coord_y = int((y - (low_y - 1) * scaling_factor) * 256)
+                    coord_x = int((x - (map_low_x - 1) * scaling_factor) * 256)
+                    coord_y = int((y - (map_low_y - 1) * scaling_factor) * 256)
                     cropped = zoomed.crop(
                         (coord_x, zoomed.size[1] - coord_y - 256, coord_x + 256, zoomed.size[1] - coord_y)
                     )
@@ -392,16 +404,14 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
                         mkdir_p(out_path)
                         cropped.save(out_path)
 
-    return basemap
 
-
-def main(version_dir):
+def main(version_dir, select_maps=[]):
     base_tiles_dir = os.path.join(version_dir, "tiles", "base")
     out_tiles_dir = os.path.join(version_dir, "tiles", "rendered")
     icons_dir = os.path.join(version_dir, "icons")
 
     cache_defs_path = os.path.join(version_dir, "worldMapDefinitions.json")
-    extra_defs_path = "user_world_defs.json"
+    extra_defs_path = os.path.join("scripts", "user_world_defs.json")
     icons_path = os.path.join(version_dir, "minimapIcons.json")
     basemaps_path = os.path.join(version_dir, "basemaps.json")
 
@@ -411,12 +421,21 @@ def main(version_dir):
 
     basemaps = []
     for map_id, defn in defs.items():
-        basemap = render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
+        if select_maps and map_id not in select_maps:
+            continue
+        basemap = load_basemap(defn)
         basemaps.append(basemap)
+        render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
 
     with open(basemaps_path, "w") as f:
         json.dump(basemaps, f)
 
 
 if __name__ == "__main__":
-    main("../out/mapgen/versions/2024-07-24_a")
+    # 1. download cache using cache.py (files go to "./data")
+    # 2. export base tiles using runelite MapExport.java (files go to "./out/mapgen/versions/{cache_date}")
+    # 3. run this file to render tiles
+    # 4. zip rendered tiles + basemaps.json + minimapIcons.json
+    # 5. upload zip to map server
+    # 6. update mapids page on wiki
+    main("./out/mapgen/versions/2024-07-24_a", [17, 34])
