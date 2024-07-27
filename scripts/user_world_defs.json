@@ -1,5 +1,214 @@
 [
     {
+        "name": "Gielinor Surface (overwrite regions)",
+        "regionList": [
+            {
+                "numberOfPlanes": 4,
+                "plane": 0,
+                "xLow": 16,
+                "xHigh": 61,
+                "yLow": 39,
+                "yHigh": 64
+            }
+        ],
+        "fileId": 0
+    },
+    {
+        "name": "Fremennik Slayer Cave (overwrite regions)",
+        "field450": 0,
+        "defaultZoom": 200,
+        "fileId": 17,
+        "field453": 0,
+        "field454": 0,
+        "field456": 0,
+        "isSurface": false,
+        "regionList": [
+            {
+                "chunk_oldXHigh": 7,
+                "numberOfPlanes": 1,
+                "oldX": 42,
+                "chunk_oldYHigh": 7,
+                "newX": 42,
+                "newY": 156,
+                "chunk_oldXLow": 0,
+                "oldY": 156,
+                "chunk_newYLow": 0,
+                "chunk_oldYLow": 0,
+                "chunk_newXLow": 0,
+                "oldPlane": 0,
+                "chunk_newXHigh": 7,
+                "chunk_newYHigh": 7
+            },
+            {
+                "chunk_oldXHigh": 7,
+                "numberOfPlanes": 1,
+                "oldX": 43,
+                "chunk_oldYHigh": 7,
+                "newX": 43,
+                "newY": 156,
+                "chunk_oldXLow": 0,
+                "oldY": 156,
+                "chunk_newYLow": 0,
+                "chunk_oldYLow": 0,
+                "chunk_newXLow": 0,
+                "oldPlane": 0,
+                "chunk_newXHigh": 7,
+                "chunk_newYHigh": 7
+            },
+            {
+                "chunk_oldXHigh": 4,
+                "numberOfPlanes": 1,
+                "oldX": 42,
+                "chunk_oldYHigh": 0,
+                "newX": 42,
+                "newY": 155,
+                "chunk_oldXLow": 0,
+                "oldY": 156,
+                "chunk_newYLow": 4,
+                "chunk_oldYLow": 0,
+                "chunk_newXLow": 0,
+                "oldPlane": 0,
+                "chunk_newXHigh": 4,
+                "chunk_newYHigh": 4
+            },
+            {
+                "chunk_oldXHigh": 4,
+                "numberOfPlanes": 1,
+                "oldX": 42,
+                "chunk_oldYHigh": 7,
+                "newX": 42,
+                "newY": 155,
+                "chunk_oldXLow": 0,
+                "oldY": 155,
+                "chunk_newYLow": 0,
+                "chunk_oldYLow": 4,
+                "chunk_newXLow": 0,
+                "oldPlane": 0,
+                "chunk_newXHigh": 4,
+                "chunk_newYHigh": 3
+            }
+        ],
+        "safeName": "slayer_cave",
+        "position": {
+            "x": 2784,
+            "y": 0,
+            "z": 10016
+        },
+        "field463": 0
+    },
+    {
+        "safeName": "feldip_underground",
+        "name": "Feldip Hills Underground (overwrite regions)",
+        "emptyTileColor": 0,
+        "backgroundColor": -16777216,
+        "defaultZoom": 100,
+        "fileId": 31,
+        "isSurface": false,
+        "regionList": [
+            {   
+                "numberOfPlanes": 1,
+                "oldPlane": 0,
+                
+                "oldX": 30,
+                "oldY": 147,
+
+                "newX": 26,
+                "newY": 143,
+
+                "chunk_oldXLow": 0,
+                "chunk_oldYLow": 0,
+                "chunk_oldXHigh": 7,
+                "chunk_oldYHigh": 7,
+                
+                "chunk_newXLow": 0,
+                "chunk_newYLow": 0,
+                "chunk_newXHigh": 7,
+                "chunk_newYHigh": 7
+            },
+            {   
+                "numberOfPlanes": 1,
+                "oldPlane": 0,
+                
+                "oldX": 33,
+                "oldY": 145,
+
+                "newX": 28,
+                "newY": 142,
+
+                "chunk_oldXLow": 0,
+                "chunk_oldYLow": 0,
+                "chunk_oldXHigh": 7,
+                "chunk_oldYHigh": 7,
+                
+                "chunk_newXLow": 0,
+                "chunk_newYLow": 0,
+                "chunk_newXHigh": 7,
+                "chunk_newYHigh": 7
+            },
+            {
+                "numberOfPlanes": 1,
+                "xLowerLeft": 29,
+                "yLowerLeft": 140,
+                "xLowerRight": 30,
+                "yLowerRight": 140,
+                "xUpperLeft": 29,
+                "yUpperLeft": 141,
+                "xUpperRight": 30,
+                "plane": 1,
+                "yUpperRight": 141
+            },
+            {
+                "numberOfPlanes": 1,
+                "xLowerLeft": 31,
+                "yLowerLeft": 140,
+                "xLowerRight": 32,
+                "yLowerRight": 140,
+                "xUpperLeft": 31,
+                "yUpperLeft": 140,
+                "xUpperRight": 32,
+                "plane": 1,
+                "yUpperRight": 140
+            },
+            {
+                "chunk_oldXHigh": 4,
+                "numberOfPlanes": 1,
+                "oldX": 39,
+                "chunk_oldYHigh": 2,
+                "newX": 31,
+                "newY": 141,
+                "chunk_oldXLow": 1,
+                "oldY": 145,
+                "chunk_newYLow": 5,
+                "chunk_oldYLow": 0,
+                "chunk_newXLow": 3,
+                "oldPlane": 0,
+                "chunk_newXHigh": 6,
+                "chunk_newYHigh": 7
+            },
+            {
+                "chunk_oldXHigh": 4,
+                "numberOfPlanes": 1,
+                "oldX": 39,
+                "chunk_oldYHigh": 3,
+                "newX": 31,
+                "newY": 142,
+                "chunk_oldXLow": 1,
+                "oldY": 145,
+                "chunk_newYLow": 0,
+                "chunk_oldYLow": 3,
+                "chunk_newXLow": 3,
+                "oldPlane": 0,
+                "chunk_newXHigh": 6,
+                "chunk_newYHigh": 0
+            }
+        ],
+        "position": {
+            "x": 1989,
+            "y": 9023,
+            "z": 1
+        }
+    },
+    {
         "name": "Abandoned Mine - Level 1",
         "regionList": [
             {
@@ -191,8 +400,8 @@
         "name": "Airship platform",
         "regionList": [
             {
-                "numberOfPlanes": 3,
-                "plane": 1,
+                "numberOfPlanes": 4,
+                "plane": 0,
                 "yHigh": 84,
                 "xHigh": 32,
                 "xLow": 32,
@@ -2493,20 +2702,28 @@
         "name": "Sophanem Dungeon",
         "regionList": [
             {
-                "numberOfPlanes": 3,
+                "numberOfPlanes": 1,
                 "plane": 0,
-                "yHigh": 144,
-                "xHigh": 51,
-                "xLow": 51,
-                "yLow": 144
+                "yHigh": 67,
+                "xHigh": 35,
+                "xLow": 35,
+                "yLow": 67
             },
             {
-                "numberOfPlanes": 3,
+                "numberOfPlanes": 1,
                 "plane": 0,
-                "yHigh": 144,
-                "xHigh": 50,
-                "xLow": 50,
-                "yLow": 144
+                "yHigh": 66,
+                "xHigh": 37,
+                "xLow": 37,
+                "yLow": 66
+            },
+            {
+                "numberOfPlanes": 1,
+                "plane": 2,
+                "yHigh": 68,
+                "xHigh": 33,
+                "xLow": 33,
+                "yLow": 68
             }
         ],
         "fileId": 10143
