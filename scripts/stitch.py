@@ -1,10 +1,10 @@
 import json
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageEnhance
 import os.path
 import glob
 import numpy as np
 
-version = "../out/mapgen/versions/2024-04-10_a"
+version = "../out/mapgen/versions/2024-07-24_a"
 
 with open(f"{version}/worldMapDefinitions.json") as f:
     defs = json.load(f)
@@ -153,14 +153,19 @@ for defn in defs:
         map_id = defn["mapId"]
     elif "fileId" in defn:
         map_id = defn["fileId"]
+    
     low_x, high_x, low_y, high_y, planes = get_bounds(defn["regionList"])
     bounds = [[low_x * 64 - PADDING, low_y * 64 - PADDING], [(high_x + 1) * 64 + PADDING, (high_y + 1) * 64 + PADDING]]
     # bounds = [[0, 0], [12800, 12800]]
-    if "position" in defn:
+    
+    if map_id < 1:
+        center = [2496, 3328]
+    elif "position" in defn:
         center = [defn["position"]["x"], defn["position"]["y"]]
     else:
         print("cent")
         center = [(low_x + high_x + 1) * 32, (low_y + high_y + 1) * 32]
+    
     base_maps.append({"mapId": map_id, "name": defn["name"], "bounds": bounds, "center": center})
     overall_height = (high_y - low_y + 1) * px_per_square * 64
     overall_width = (high_x - low_x + 1) * px_per_square * 64
@@ -170,6 +175,7 @@ for defn in defs:
         print(map_id, plane)
         valid_icons = []
         im = Image.new("RGB", (overall_width + 512, overall_height + 512))
+        
         for region in defn["regionList"]:
             if "xLowerLeft" in region:
                 old_low_x = region["xLowerLeft"]
@@ -181,11 +187,13 @@ for defn in defs:
                 new_low_y = region["yLowerRight"]
                 new_high_y = region["yUpperRight"]
                 print(old_low_x == new_low_x, old_low_y == new_low_y, old_high_x == new_high_x, old_high_y == new_high_y)
+                
                 valid_icons.extend(
                     get_icons_inside_area(
                         region["plane"] + plane, old_low_x, old_high_x, old_low_y, old_high_y, all_planes=plane == 0
                     )
                 )
+                
                 for x in range(old_low_x, old_high_x + 1):
                     for y in range(old_low_y, old_high_y + 1):
                         filename = f"{version}/tiles/base/{region['plane'] + plane}_{x}_{y}.png"
@@ -194,6 +202,7 @@ for defn in defs:
                             im_x = (x - low_x + new_low_x - old_low_x) * px_per_square * 64
                             im_y = (high_y - y) * px_per_square * 64
                             im.paste(square, box=(im_x + 256, im_y + 256))
+            
             elif "chunk_oldXLow" in region:
                 filename = f"{version}/tiles/base/{region['oldPlane'] + plane}_{region['oldX']}_{region['oldY']}.png"
                 dx = (
@@ -209,6 +218,7 @@ for defn in defs:
                     - region["chunk_oldYLow"] * 8
                 )
                 dz = 0 - region["oldPlane"]
+                
                 valid_icons.extend(
                     get_icons_inside_area(
                         region["oldPlane"] + plane,
@@ -226,6 +236,7 @@ for defn in defs:
                         all_planes=plane == 0,
                     )
                 )
+                
                 if os.path.exists(filename):
                     square = Image.open(filename)
                     cropped = square.crop(
@@ -241,6 +252,7 @@ for defn in defs:
                         7 - region["chunk_newYHigh"]
                     ) * px_per_square * 8
                     im.paste(cropped, box=(im_x + 256, im_y + 256))
+            
             elif "chunk_xLow" in region:
                 valid_icons.extend(
                     get_icons_inside_area(
@@ -257,6 +269,7 @@ for defn in defs:
                     )
                 )
                 filename = f"{version}/tiles/base/{region['plane'] + plane}_{region['xLow']}_{region['yLow']}.png"
+                
                 if os.path.exists(filename):
                     square = Image.open(filename)
                     cropped = square.crop(
@@ -272,6 +285,7 @@ for defn in defs:
                         7 - region["chunk_yHigh"]
                     ) * px_per_square * 8
                     im.paste(cropped, box=(im_x + 256, im_y + 256))
+            
             elif "xLow" in region:
                 valid_icons.extend(
                     get_icons_inside_area(
@@ -283,6 +297,7 @@ for defn in defs:
                         all_planes=plane == 0,
                     )
                 )
+                
                 for x in range(region["xLow"], region["xHigh"] + 1):
                     for y in range(region["yLow"], region["yHigh"] + 1):
                         filename = f"{version}/tiles/base/{region['plane'] + plane}_{x}_{y}.png"
@@ -291,14 +306,25 @@ for defn in defs:
                             im_x = (x - low_x) * px_per_square * 64
                             im_y = (high_y - y) * px_per_square * 64
                             im.paste(square, box=(im_x + 256, im_y + 256))
+            
             else:
                 raise ValueError(region)
+        
         if plane == 0:
             data = np.asarray(im.convert("RGB")).copy()
             data[(data == (255, 0, 255)).all(axis=-1)] = (0, 0, 0)
             im = Image.fromarray(data, mode="RGB")
             if planes > 1:
-                plane_0_map = im.convert("LA").filter(ImageFilter.GaussianBlur(radius=5))
+                plane_0_map = im.filter(ImageFilter.GaussianBlur(radius=2))
+                plane_0_map = ImageEnhance.Brightness(plane_0_map).enhance(0.7)
+                
+                # decrease contrast
+                intermediate = Image.new("LA", plane0Map.size, 80).convert(plane0Map.mode)
+                plane0Map = Image.blend(intermediate, plane0Map, 0.8)
+                del intermediate
+                
+                plane_0_map = ImageEnhance.Color(plane_0_map).enhance(0.5)
+        
         elif plane > 0:
             data = np.asarray(im.convert("RGBA")).copy()
             data[:, :, 3] = 255 * (data[:, :, :3] != (255, 0, 255)).all(axis=-1)
@@ -310,7 +336,9 @@ for defn in defs:
             scaling_factor = 2.0**zoom / 2.0**2
             zoomed_width = int(round(scaling_factor * im.width))
             zoomed_height = int(round(scaling_factor * im.height))
-            zoomed = im.resize((zoomed_width, zoomed_height), resample=Image.BILINEAR)
+            resample = Image.BILINEAR if zoom <= 1 else Image.NEAREST
+            zoomed = im.resize((zoomed_width, zoomed_height), resample=resample)
+            
             if zoom >= 0:
                 for x, y, sprite_id in valid_icons:
                     sprite = icon_sprites[sprite_id]
