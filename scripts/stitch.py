@@ -1,7 +1,7 @@
 import json
-from PIL import Image, ImageFilter, ImageEnhance
 import os.path
 import glob
+from PIL import Image, ImageFilter, ImageEnhance
 import numpy as np
 
 
@@ -456,7 +456,7 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
                         cropped.save(out_path)
 
 
-def main(version_dir, select_maps=[]):
+def main(version_dir, select_maps=()):
     base_tiles_dir = os.path.join(version_dir, "tiles", "base")
     out_tiles_dir = os.path.join(version_dir, "tiles", "rendered")
     icons_dir = os.path.join(version_dir, "icons")
@@ -484,9 +484,9 @@ def main(version_dir, select_maps=[]):
 
 if __name__ == "__main__":
     # 1. download cache using cache.py (files go to "./data")
-    # 2. export base tiles using runelite MapExport.java (files go to "./out/mapgen/versions/{cache_date}")
-    # 3. run this file to render tiles
+    # 2. export base tiles using runelite MapExport.java (images go to "./out/mapgen/versions/{cache_date}/tiles/base")
+    # 3. run this file to render tiles (images go to "./out/mapgen/versions/{cache_date}/tiles/rendered")
     # 4. zip rendered tiles + basemaps.json + minimapIcons.json
     # 5. upload zip to map server
-    # 6. update mapids page on wiki
-    main("./out/mapgen/versions/2024-07-24_a", [17, 34])
+    # 6. update mapids page on wiki if any changes occurred
+    main("./out/mapgen/versions/2024-07-24_a", (17, 34))
