@@ -13,19 +13,16 @@ CACHE_URL_BASE = "https://archive.openrs2.org"
 UTC = dt.timezone.utc
 
 
-def make_output_folder(date_str: str, version_dir: str) -> str:
-    version_count = 0
-    letter = "a"
-    out_folder = os.path.join(version_dir, f"{date_str}_{letter}")
-    out_zip = out_folder + ".zip"
-    while os.path.exists(out_zip):
-        version_count += 1
-        letter = ascii_lowercase[version_count]
-        out_folder = os.path.join(version_dir, f"{date_str}_{letter}")
-        out_zip = out_folder + ".zip"
-
+def make_output_folder(date_str: str, version_dir: str) -> tuple[str, str]:
+    version_name = date_str
+    out_folder = os.path.join(version_dir, version_name)
+    tries = 0
+    while os.path.exists(out_folder):
+        version_name = date_str + f"_{ascii_lowercase[tries]}"
+        out_folder = os.path.join(version_dir, version_name)
+        tries += 1
     mkdir(out_folder)
-    return out_folder
+    return version_name, out_folder
 
 
 def get_cache_info() -> tuple[int, str]:
@@ -46,18 +43,18 @@ def get_cache_info() -> tuple[int, str]:
             cache_id = cache["id"]
 
     date_str = latest.strftime("%Y-%m-%d")
-    print(f"Found cache {cache_id} from {date_str}\n")
+    # print(f"Found cache {cache_id} from {date_str}\n")
     return cache_id, date_str
 
 
 def download_xteas(cache_id, out_folder):
     keys_path = os.path.join(out_folder, "xteas.json")
 
-    print("Downloading xteas...")
-    start = dt.datetime.now()
+    # print("Downloading xteas...")
+    # start = dt.datetime.now()
     response = requests.get(CACHE_URL_BASE + f"/caches/runescape/{cache_id}/keys.json", timeout=30)
-    end = dt.datetime.now()
-    print(f"{int((end-start).total_seconds())}s elapsed.\n")
+    # end = dt.datetime.now()
+    # print(f"{int((end-start).total_seconds())}s elapsed.\n")
 
     key_list = []
     for xtea in response.json():
@@ -75,26 +72,27 @@ def download_xteas(cache_id, out_folder):
 
 
 def download_cache(cache_id, out_folder):
-    print("Downloading cache...")
-    start = dt.datetime.now()
+    # print("Downloading cache...")
+    # start = dt.datetime.now()
     raw = requests.get(CACHE_URL_BASE + f"/caches/runescape/{cache_id}/disk.zip", timeout=60).content
-    end = dt.datetime.now()
-    print(f"{int((end-start).total_seconds())}s elapsed.\n")
+    # end = dt.datetime.now()
+    # print(f"{int((end-start).total_seconds())}s elapsed.\n")
 
     z = ZipFile(BytesIO(raw))
     z.extractall(out_folder)
 
 
-def download(version_dir):
+def download():
     cache_id, date_str = get_cache_info()
-    out_folder = make_output_folder(date_str, version_dir)
+    cache_dir = "./data/versions"
+    version_name, out_folder = make_output_folder(date_str, cache_dir)
 
     download_xteas(cache_id, out_folder)
     download_cache(cache_id, out_folder)
 
-    return out_folder
+    return version_name
 
 
 if __name__ == "__main__":
-    out_dir = download("data")
-    print(out_dir)
+    version = download()
+    print(version)

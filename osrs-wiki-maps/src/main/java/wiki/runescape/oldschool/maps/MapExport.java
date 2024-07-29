@@ -33,6 +33,7 @@ import java.util.List;
 public class MapExport {
     private static RegionLoader regionLoader;
     private static String version;
+    private static String  outputDir;
     public static void main(String[] args) throws Exception {
         Options options = new Options();
         options.addOption(Option.builder().longOpt("cacheversion").hasArg().required().build());
@@ -51,13 +52,18 @@ public class MapExport {
             return;
         }
 
+        String intermediateDir = String.format("./out/mapgen/versions/%s", version);
+        outputDir = String.format("%s/output", intermediateDir);
+        String cacheDir = String.format("./data/versions/%s", version);
+
         Gson gson = new Gson();
-        String cache = "./data/cache";
+        String cache = String.format("%s/cache", cacheDir);
         Store store = new Store(new File(cache));
         store.load();
 
+        String xteas = String.format("%s/xteas.json", cacheDir);
         XteaKeyManager xteaKeyManager = new XteaKeyManager();
-        try (FileInputStream fin = new FileInputStream("./data/xteas.json"))
+        try (FileInputStream fin = new FileInputStream(xteas))
         {
             xteaKeyManager.loadKeys(fin);
         }
@@ -70,20 +76,19 @@ public class MapExport {
         regionLoader = new RegionLoader(store, xteaKeyManager);
         regionLoader.loadRegions();
         for (Region region : regionLoader.getRegions()) {
+            int x = region.getRegionX();
+            int y = region.getRegionY();
+            String dirname = String.format("%s/tiles/base", intermediateDir);
             for (int plane = 0; plane < 4; plane++) {
-                int x = region.getRegionX();
-                int y = region.getRegionY();
                 BufferedImage reg = dumper.drawRegion(region, plane);
-                String dirname = String.format("./out/mapgen/versions/%s/tiles/base", version);
                 String filename = String.format("%s_%s_%s.png", plane, x, y);
                 File outputfile = fileWithDirectoryAssurance(dirname, filename);
                 ImageIO.write(reg, "png", outputfile);
             }
         }
 
-        String dirname = String.format("./out/mapgen/versions/%s", version);
         String filename = "minimapIcons.json";
-        File outputfile = fileWithDirectoryAssurance(dirname, filename);
+        File outputfile = fileWithDirectoryAssurance(intermediateDir, filename);
         PrintWriter out = new PrintWriter(outputfile);
         List<MinimapIcon> icons = getMapIcons(store);
         String json = gson.toJson(icons);
@@ -91,7 +96,7 @@ public class MapExport {
         out.close();
 
         filename = "worldMapDefinitions.json";
-        outputfile = fileWithDirectoryAssurance(dirname, filename);
+        outputfile = fileWithDirectoryAssurance(intermediateDir, filename);
         out = new PrintWriter(outputfile);
         List<WorldMapDefinition> definitions = getWorldMapDefinitions(store);
         json = gson.toJson(definitions);
@@ -150,17 +155,17 @@ public class MapExport {
 
         for (WorldMapElementDefinition element : elements) {
             AreaDefinition area = areaManager.getArea(element.getAreaDefinitionId());
+            if (area.spriteId == -1) {  // maybe these are the yellow squares/lines, no sprite?
+                continue;
+            }
             icons.add(new MinimapIcon(element.getWorldPosition(), area.spriteId));
             spriteIds.add(area.spriteId);
         }
 
         for (int spriteId : spriteIds) {
-            if (spriteId == -1) {
-                continue;
-            }
             SpriteDefinition sprite = spriteManager.findSprite(spriteId, 0);
             BufferedImage iconImage = spriteManager.getSpriteImage(sprite);
-            String dirname = String.format("./out/mapgen/versions/%s/icons", version);
+            String dirname = String.format("%s/icons", outputDir);
             String filename = String.format("%s.png", spriteId);
             File outputfile = fileWithDirectoryAssurance(dirname, filename);
             ImageIO.write(iconImage, "png", outputfile);

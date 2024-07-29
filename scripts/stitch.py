@@ -456,15 +456,16 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
                         cropped.save(out_path)
 
 
-def main(version_dir, select_maps=()):
+def main(version, select_maps=()):
+    version_dir = f"./out/mapgen/versions/{version}"
     base_tiles_dir = os.path.join(version_dir, "tiles", "base")
-    out_tiles_dir = os.path.join(version_dir, "tiles", "rendered")
-    icons_dir = os.path.join(version_dir, "icons")
+    out_tiles_dir = os.path.join(version_dir, "output", "tiles", "rendered")
+    icons_dir = os.path.join(version_dir, "output", "icons")
 
     cache_defs_path = os.path.join(version_dir, "worldMapDefinitions.json")
     extra_defs_path = os.path.join("scripts", "user_world_defs.json")
     icons_path = os.path.join(version_dir, "minimapIcons.json")
-    basemaps_path = os.path.join(version_dir, "basemaps.json")
+    basemaps_path = os.path.join(version_dir, "output", "basemaps.json")
 
     defs = load_defs(cache_defs_path, extra_defs_path, base_tiles_dir)
     icons = load_icons(icons_path)
@@ -489,4 +490,4 @@ if __name__ == "__main__":
     # 4. zip rendered tiles + basemaps.json + minimapIcons.json
     # 5. upload zip to map server
     # 6. update mapids page on wiki if any changes occurred
-    main("./out/mapgen/versions/2024-07-24_a", (17, 34))
+    main("2024-07-24_a", (17, 34))
