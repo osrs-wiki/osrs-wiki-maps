@@ -381,7 +381,7 @@ def render_type_3(plane, region, icons, plane_image, base_tiles_dir, map_low_x, 
 
 def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir):
     """
-    render and save images for this map id to "out/mapgen/versions/#/tiles/rendered"
+    render and save images for this map id to "out/mapgen/versions/#/output/tiles/rendered"
     """
     map_low_x, map_high_x, map_low_y, map_high_y, planes = get_bounds(defn["regionList"])
 
@@ -486,8 +486,8 @@ def main(version, select_maps=()):
 if __name__ == "__main__":
     # 1. download cache using cache.py (files go to "./data")
     # 2. export base tiles using runelite MapExport.java (images go to "./out/mapgen/versions/{cache_date}/tiles/base")
-    # 3. run this file to render tiles (images go to "./out/mapgen/versions/{cache_date}/tiles/rendered")
-    # 4. zip rendered tiles + basemaps.json + minimapIcons.json
+    # 3. run this file to render tiles (images go to "./out/mapgen/versions/{cache_date}/output/tiles/rendered")
+    # 4. zip rendered tiles + basemaps.json + map icons
     # 5. upload zip to map server
     # 6. update mapids page on wiki if any changes occurred
     main("2024-07-24_a", (17, 34))
