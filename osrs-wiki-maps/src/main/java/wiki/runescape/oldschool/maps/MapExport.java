@@ -6,6 +6,7 @@ import net.runelite.cache.definitions.AreaDefinition;
 import net.runelite.cache.definitions.ObjectDefinition;
 import net.runelite.cache.definitions.SpriteDefinition;
 import net.runelite.cache.definitions.WorldMapDefinition;
+import net.runelite.cache.definitions.WorldMapElementDefinition;
 import net.runelite.cache.definitions.loaders.WorldMapLoader;
 import net.runelite.cache.fs.*;
 import net.runelite.cache.region.Location;
@@ -131,6 +132,10 @@ public class MapExport {
         objectManager.load();
         AreaManager areaManager = new AreaManager(store);
         areaManager.load();
+        WorldMapManager worldMapManager = new WorldMapManager(store);
+        worldMapManager.load();
+        List<WorldMapElementDefinition> elements = worldMapManager.getElements();
+
         for (Region region : regionLoader.getRegions()) {
             for (Location location : region.getLocations()) {
                 ObjectDefinition od = objectManager.getObject(location.getId());
@@ -143,13 +148,21 @@ public class MapExport {
             }
         }
 
+        for (WorldMapElementDefinition element : elements) {
+            AreaDefinition area = areaManager.getArea(element.getAreaDefinitionId());
+            icons.add(new MinimapIcon(element.getWorldPosition(), area.spriteId));
+            spriteIds.add(area.spriteId);
+        }
+
         for (int spriteId : spriteIds) {
+            if (spriteId == -1) {
+                continue;
+            }
             SpriteDefinition sprite = spriteManager.findSprite(spriteId, 0);
             BufferedImage iconImage = spriteManager.getSpriteImage(sprite);
             String dirname = String.format("./out/mapgen/versions/%s/icons", version);
             String filename = String.format("%s.png", spriteId);
             File outputfile = fileWithDirectoryAssurance(dirname, filename);
-            System.out.println(outputfile);
             ImageIO.write(iconImage, "png", outputfile);
         }
         return icons;
