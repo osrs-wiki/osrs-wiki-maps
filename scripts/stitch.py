@@ -411,14 +411,14 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
             data = np.asarray(plane_image.convert("RGBA")).copy()
             data[:, :, 3] = 255 * (data[:, :, :3] != (255, 0, 255)).all(axis=-1)
             mask = Image.fromarray(data, mode="RGBA")
-            plane_image = plane_0_map.copy()
+            plane_image = plane_0_map.copy() # type: ignore
             plane_image.paste(mask, (0, 0), mask)
 
         for zoom in range(-3, 4):
             scaling_factor = 2.0**zoom / 2.0**2
             zoomed_width = int(round(scaling_factor * plane_image.width))
             zoomed_height = int(round(scaling_factor * plane_image.height))
-            resample = Image.BILINEAR if zoom <= 1 else Image.NEAREST
+            resample = Image.BILINEAR if zoom <= 1 else Image.NEAREST # type: ignore # pylint:disable=E1101
             zoomed = plane_image.resize((zoomed_width, zoomed_height), resample=resample)
 
             if zoom >= 0:
@@ -456,8 +456,13 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
                         cropped.save(out_path)
 
 
-def main(version, select_maps=()):
+def main(select_maps=()):
+    version_txt = "./data/versions/version.txt"
+    with open(version_txt, "rt") as  file:
+        version = file.read()
+
     version_dir = f"./out/mapgen/versions/{version}"
+
     base_tiles_dir = os.path.join(version_dir, "tiles", "base")
     out_tiles_dir = os.path.join(version_dir, "output", "tiles", "rendered")
     icons_dir = os.path.join(version_dir, "output", "icons")
@@ -490,4 +495,4 @@ if __name__ == "__main__":
     # 4. zip rendered tiles + basemaps.json + map icons
     # 5. upload zip to map server
     # 6. update mapids page on wiki if any changes occurred
-    main("2024-07-24_a", (17, 34))
+    main((17, 34))

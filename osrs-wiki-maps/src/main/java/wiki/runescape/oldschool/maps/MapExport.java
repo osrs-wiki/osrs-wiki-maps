@@ -16,41 +16,23 @@ import net.runelite.cache.region.RegionLoader;
 import com.google.gson.Gson;
 import net.runelite.cache.util.XteaKeyManager;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Scanner;
 
 public class MapExport {
     private static RegionLoader regionLoader;
     private static String version;
     private static String  outputDir;
     public static void main(String[] args) throws Exception {
-        Options options = new Options();
-        options.addOption(Option.builder().longOpt("cacheversion").hasArg().required().build());
-
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd;
-        try
-        {
-            cmd = parser.parse(options, args);
-            version = cmd.getOptionValue("cacheversion");
-        }
-        catch (ParseException ex)
-        {
-            System.err.println("Error parsing command line options: " + ex.getMessage());
-            System.exit(-1);
-            return;
-        }
+        String versionPath = "./data/versions/version.txt";
+        File versionTxt = new File(versionPath);
+        Scanner sc = new Scanner(versionTxt);
+        version = sc.next();
 
         String intermediateDir = String.format("./out/mapgen/versions/%s", version);
         outputDir = String.format("%s/output", intermediateDir);

@@ -1,4 +1,4 @@
-from os import mkdir
+from os import makedirs
 import os.path
 from io import BytesIO
 import json
@@ -21,7 +21,7 @@ def make_output_folder(date_str: str, version_dir: str) -> tuple[str, str]:
         version_name = date_str + f"_{ascii_lowercase[tries]}"
         out_folder = os.path.join(version_dir, version_name)
         tries += 1
-    mkdir(out_folder)
+    makedirs(out_folder)
     return version_name, out_folder
 
 
@@ -82,6 +82,15 @@ def download_cache(cache_id, out_folder):
     z.extractall(out_folder)
 
 
+def write_version_txt(version_name, cache_dir):
+    txt_path = os.path.join(cache_dir, "version.txt")
+    if os.path.exists(txt_path):
+        os.remove(txt_path)
+
+    with open(txt_path, "wt") as file:
+        file.write(version_name)
+
+
 def download():
     cache_id, date_str = get_cache_info()
     cache_dir = "./data/versions"
@@ -89,6 +98,7 @@ def download():
 
     download_xteas(cache_id, out_folder)
     download_cache(cache_id, out_folder)
+    write_version_txt(version_name, cache_dir)
 
     return version_name
 
