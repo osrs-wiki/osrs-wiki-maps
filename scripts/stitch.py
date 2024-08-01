@@ -489,10 +489,4 @@ def main(select_maps=()):
 
 
 if __name__ == "__main__":
-    # 1. download cache using cache.py (files go to "./data")
-    # 2. export base tiles using runelite MapExport.java (images go to "./out/mapgen/versions/{cache_date}/tiles/base")
-    # 3. run this file to render tiles (images go to "./out/mapgen/versions/{cache_date}/output/tiles/rendered")
-    # 4. zip rendered tiles + basemaps.json + map icons
-    # 5. upload zip to map server
-    # 6. update mapids page on wiki if any changes occurred
-    main((17, 34))
+    main()
