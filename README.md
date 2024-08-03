@@ -1,6 +1,11 @@
 # osrs-wiki-maps
 A set of tools for generating map images for the OSRS wiki.
 
+## Setup
+1. Install JDK 11
+2. Install Python 3.x.
+3. `pip3 install -r requirements.txt`
+
 ## Generating maps
 The files all assume your current working directory is the root of this repository.
 1. `cache.py` runs first (no arguments), downloading the latest live oldschool cache from https://archive.openrs2.org.

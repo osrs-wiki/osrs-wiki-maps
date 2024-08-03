@@ -1,6 +1,5 @@
 package wiki.runescape.oldschool.maps;
 
-
 import net.runelite.cache.*;
 import net.runelite.cache.definitions.AreaDefinition;
 import net.runelite.cache.definitions.ObjectDefinition;
@@ -15,6 +14,8 @@ import net.runelite.cache.region.RegionLoader;
 
 import com.google.gson.Gson;
 import net.runelite.cache.util.XteaKeyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -23,16 +24,20 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
 
 public class MapExport {
     private static RegionLoader regionLoader;
     private static String version;
     private static String  outputDir;
+
+    private static final Logger logger = LoggerFactory.getLogger(MapExport.class);
     public static void main(String[] args) throws Exception {
         String versionPath = "./data/versions/version.txt";
         File versionTxt = new File(versionPath);
         Scanner sc = new Scanner(versionTxt);
         version = sc.next();
+        logger.info("Version: " + version);
 
         String intermediateDir = String.format("./out/mapgen/versions/%s", version);
         outputDir = String.format("%s/output", intermediateDir);
@@ -42,6 +47,7 @@ public class MapExport {
         String cache = String.format("%s/cache", cacheDir);
         Store store = new Store(new File(cache));
         store.load();
+        logger.info("Cache loaded: " + cache);
 
         String xteas = String.format("%s/xteas.json", cacheDir);
         XteaKeyManager xteaKeyManager = new XteaKeyManager();
@@ -68,6 +74,7 @@ public class MapExport {
                 ImageIO.write(reg, "png", outputfile);
             }
         }
+        logger.info("Maps generated for " + regionLoader.getRegions().size() + " regions");
 
         String filename = "minimapIcons.json";
         File outputfile = fileWithDirectoryAssurance(intermediateDir, filename);
@@ -76,6 +83,7 @@ public class MapExport {
         String json = gson.toJson(icons);
         out.write(json);
         out.close();
+        logger.info("Minimap icon definitions generated");
 
         filename = "worldMapDefinitions.json";
         outputfile = fileWithDirectoryAssurance(intermediateDir, filename);
@@ -84,6 +92,7 @@ public class MapExport {
         json = gson.toJson(definitions);
         out.write(json);
         out.close();
+        logger.info("World map definitions generated");
     }
 
     private static File fileWithDirectoryAssurance(String directory, String filename) {
