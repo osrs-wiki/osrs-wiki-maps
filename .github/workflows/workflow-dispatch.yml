@@ -41,8 +41,11 @@ jobs:
       - name: Stitch maps
         run: python scripts/stitch.py
 
-      - name: Upload Output
-        uses: actions/upload-artifact@v3
+      - name: Archive output
+        run: zip -r out.zip ./out
+
+      - name: Upload output
+        uses: actions/upload-artifact@v4
         with:
           name: out-${{ github.run_id }}-${{ github.run_attempt }}
-          path: out/
+          path: out.zip
