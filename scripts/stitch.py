@@ -192,6 +192,34 @@ def get_icons_inside_area(
     return valid
 
 
+def map_is_selected(select_regions, map_low_x, map_high_x, map_low_y, map_high_y):
+    if not select_regions:
+        return True
+
+    for region_x, region_y in select_regions:
+        if (map_low_x <= region_x <= map_high_x) and (map_low_y <= region_y <= map_high_y):
+            return True
+
+    return False
+
+
+def image_is_selected(select_regions, x, y, scaling_factor):
+    if not select_regions:
+        return True
+
+    for region_x, region_y in select_regions:
+        # don't only want to render the selected region, but also adjacent regions
+        # in case icons cross over or plane 0 blur at the boundary has changed
+        left = x / scaling_factor - 1  # adjacent images have lower left coord 1 *map square* to the east
+        right = (x + 1) / scaling_factor  # adjacent images have lower left coord 1 *image* to the west
+        bottom = y / scaling_factor - 1
+        top = (y + 1) / scaling_factor
+        if (left <= region_x <= right) and  (bottom <= region_y <= top):
+            return True
+
+    return False
+
+
 def make_plane_0_map(image):
     """
     Get blurry + grey-ish plane 0 for rendering beneath upper planes
@@ -386,14 +414,8 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir,
     map_low_x, map_high_x, map_low_y, map_high_y, planes = get_bounds(defn["regionList"])
 
     # check if this map needs to be rendered
-    if select_regions:
-        select_regions_in_map = False
-        for region_x, region_y in select_regions:
-            if (map_low_x <= region_x <= map_high_x) and (map_low_y <= region_y <= map_high_y):
-                select_regions_in_map = True
-                break
-        if not select_regions_in_map:
-            return
+    if not map_is_selected(select_regions, map_low_x, map_high_x, map_low_y, map_high_y):
+        return
 
     map_height = (map_high_y - map_low_y + 1) * PX_PER_TILE * 64
     map_width = (map_high_x - map_low_x + 1) * PX_PER_TILE * 64
@@ -454,17 +476,8 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir,
             high_zoomed_y = int((map_high_y + 0.9 + 1) * scaling_factor + 0.01)
             for x in range(low_zoomed_x, high_zoomed_x + 1):
                 for y in range(low_zoomed_y, high_zoomed_y + 1):
-                    if select_regions:
-                        select_regions_in_image = False
-                        for region_x, region_y in select_regions:
-                            # don't only want to render the selected region, but also adjacent regions
-                            # in case icons cross over or plane 0 blur at the boundary has changed
-                            if (x / scaling_factor - 1 <= region_x <= (x + 1) / scaling_factor) and \
-                               (y / scaling_factor - 1 <= region_y <= (y + 1) / scaling_factor):
-                                select_regions_in_image = True
-                                break
-                        if not select_regions_in_image:
-                            continue
+                    if not image_is_selected(select_regions, x, y, scaling_factor):
+                        continue
 
                     coord_x = int((x - (map_low_x - 1) * scaling_factor) * 256)
                     coord_y = int((y - (map_low_y - 1) * scaling_factor) * 256)
