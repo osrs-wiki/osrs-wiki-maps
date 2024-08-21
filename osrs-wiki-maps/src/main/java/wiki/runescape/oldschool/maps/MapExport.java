@@ -40,7 +40,7 @@ public class MapExport {
 
         List<Integer> regionDiffs = new ArrayList<>();
         while (sc.hasNextLine()) {
-            String regionStr = sc.nextLine();
+            String regionStr = sc.next();
             if (regionStr.isEmpty()) {
                 continue;
             }
