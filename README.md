@@ -11,11 +11,12 @@ The files all assume your current working directory is the root of this reposito
 1. `cache.py` runs first (no arguments), downloading the latest live oldschool cache from https://archive.openrs2.org.
     - Cache files are stored in  in `./data/versions/{version_name}`
     - The auto-generated version name is used to (over)write `./data/versions/version.txt` containing just the version name.
-2. `MapExport.java` runs next (no arguments), reading the version name from the .txt. It generates:
-    - Imagery tiles (no labels or map icons) go in `./out/mapgen/versions/{version_name}/tiles/rendered`
+2. Edit `version.txt` if you only want to render certain regions. Leave version name on the first line, then subsequent lines contain the region id (e.g. 12850 for Lumbridge castle).
+3. `MapExport.java` runs next (no arguments), reading the version name from the .txt. It generates:
+    - Imagery tiles (no labels or map icons) go in `./out/mapgen/versions/{version_name}/tiles/base`
     - `minimapIcons.json` and `worldMapDefinitions.json` go in `./out/mapgen/versions/{version_name}`
-3. `stitch.py` runs last (no arguments), again reading the version name from the file, and rendering maps from the tiles in step 2.
+4. `stitch.py` runs last (no arguments), again reading the version name from the file, and rendering maps from the tiles in step 2.
     - Output images stored in `./out/mapgen/versions/{version_name}/output/tiles/rendered`
     - Output icons stored in `./out/mapgen/versions/{version_name}/output/icons`
     - Wiki basemap definitions go in `./out/mapgen/versions/{version_name}/output/basemaps.json`
-4. The directory `./out/mapgen/versions/{version_name}/output` can then be zipped and uploaded to map server.
+5. The directory `./out/mapgen/versions/{version_name}/output` can then be zipped and uploaded to map server.

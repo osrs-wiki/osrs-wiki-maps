@@ -379,11 +379,21 @@ def render_type_3(plane, region, icons, plane_image, base_tiles_dir, map_low_x, 
     return plane_image, area_icons
 
 
-def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir):
+def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir, select_regions):
     """
     render and save images for this map id to "out/mapgen/versions/#/output/tiles/rendered"
     """
     map_low_x, map_high_x, map_low_y, map_high_y, planes = get_bounds(defn["regionList"])
+
+    # check if this map needs to be rendered
+    if select_regions:
+        select_regions_in_map = False
+        for region_x, region_y in select_regions:
+            if (map_low_x <= region_x <= map_high_x) and (map_low_y <= region_y <= map_high_y):
+                select_regions_in_map = True
+                break
+        if not select_regions_in_map:
+            return
 
     map_height = (map_high_y - map_low_y + 1) * PX_PER_TILE * 64
     map_width = (map_high_x - map_low_x + 1) * PX_PER_TILE * 64
@@ -444,6 +454,18 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
             high_zoomed_y = int((map_high_y + 0.9 + 1) * scaling_factor + 0.01)
             for x in range(low_zoomed_x, high_zoomed_x + 1):
                 for y in range(low_zoomed_y, high_zoomed_y + 1):
+                    if select_regions:
+                        select_regions_in_image = False
+                        for region_x, region_y in select_regions:
+                            # don't only want to render the selected region, but also adjacent regions
+                            # in case icons cross over or plane 0 blur at the boundary has changed
+                            if (x / scaling_factor - 1 <= region_x <= (x + 1) / scaling_factor) and \
+                               (y / scaling_factor - 1 <= region_y <= (y + 1) / scaling_factor):
+                                select_regions_in_image = True
+                                break
+                        if not select_regions_in_image:
+                            continue
+
                     coord_x = int((x - (map_low_x - 1) * scaling_factor) * 256)
                     coord_y = int((y - (map_low_y - 1) * scaling_factor) * 256)
                     cropped = zoomed.crop(
@@ -458,8 +480,17 @@ def render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
 
 def main(select_maps=()):
     version_txt = "./data/versions/version.txt"
-    with open(version_txt, "rt") as  file:
-        version = file.read()
+
+    select_regions = []
+    with open(version_txt, "rt") as file:
+        for i, line in enumerate(file.read().splitlines()):
+            if i == 0:
+                version = line
+            elif line:  # ignore blank lines
+                region_id = int(line)
+                region_x = region_id // 256
+                region_y = region_id - region_x * 256
+                select_regions.append((region_x, region_y))
 
     version_dir = f"./out/mapgen/versions/{version}"
 
@@ -482,7 +513,7 @@ def main(select_maps=()):
             continue
         basemap = load_basemap(defn)
         basemaps.append(basemap)
-        render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir)
+        render_map(map_id, defn, icons, icon_sprites, base_tiles_dir, out_tiles_dir, select_regions)
 
     with open(basemaps_path, "w") as f:
         json.dump(basemaps, f)
