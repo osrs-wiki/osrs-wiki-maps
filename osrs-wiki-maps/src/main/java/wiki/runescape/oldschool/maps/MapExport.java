@@ -35,12 +35,12 @@ public class MapExport {
         String versionPath = "./data/versions/version.txt";
         File versionTxt = new File(versionPath);
         Scanner sc = new Scanner(versionTxt);
-        version = sc.next();
+        version = sc.nextLine();
         logger.info("Version: " + version);
 
         List<Integer> regionDiffs = new ArrayList<>();
         while (sc.hasNextLine()) {
-            String regionStr = sc.next();
+            String regionStr = sc.nextLine();
             if (regionStr.isEmpty()) {
                 continue;
             }
