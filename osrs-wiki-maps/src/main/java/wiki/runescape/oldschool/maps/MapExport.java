@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
 
 public class MapExport {
     private static RegionLoader regionLoader;
@@ -38,6 +37,17 @@ public class MapExport {
         Scanner sc = new Scanner(versionTxt);
         version = sc.next();
         logger.info("Version: " + version);
+
+        List<Integer> regionDiffs = new ArrayList<>();
+        while (sc.hasNextLine()) {
+            String regionStr = sc.nextLine();
+            if (regionStr.isEmpty()) {
+                continue;
+            }
+            logger.info("Region: " + regionStr);
+            int regionInt = Integer.parseInt(regionStr);
+            regionDiffs.add(regionInt);
+        }
 
         String intermediateDir = String.format("./out/mapgen/versions/%s", version);
         outputDir = String.format("%s/output", intermediateDir);
@@ -64,6 +74,10 @@ public class MapExport {
         regionLoader = new RegionLoader(store, xteaKeyManager);
         regionLoader.loadRegions();
         for (Region region : regionLoader.getRegions()) {
+            int regionId = region.getRegionID();
+            if (!regionDiffs.isEmpty() && !regionDiffs.contains(regionId)) {
+                continue;
+            }
             int x = region.getRegionX();
             int y = region.getRegionY();
             String dirname = String.format("%s/tiles/base", intermediateDir);
@@ -102,7 +116,7 @@ public class MapExport {
     }
 
     private static List<WorldMapDefinition> getWorldMapDefinitions(Store store) throws Exception {
-        List<WorldMapDefinition> definitions = new ArrayList<WorldMapDefinition>();
+        List<WorldMapDefinition> definitions = new ArrayList<>();
         WorldMapLoader loader = new WorldMapLoader();
         Index index = store.getIndex(IndexType.WORLDMAP);
 
@@ -120,10 +134,10 @@ public class MapExport {
     }
 
     private static List<MinimapIcon> getMapIcons(Store store) throws Exception {
-        List<MinimapIcon> icons = new ArrayList<MinimapIcon>();
+        List<MinimapIcon> icons = new ArrayList<>();
         SpriteManager spriteManager = new SpriteManager(store);
         spriteManager.load();
-        HashSet<Integer> spriteIds = new HashSet<Integer>();
+        HashSet<Integer> spriteIds = new HashSet<>();
         ObjectManager objectManager = new ObjectManager(store);
         objectManager.load();
         AreaManager areaManager = new AreaManager(store);
