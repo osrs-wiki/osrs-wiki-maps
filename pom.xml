@@ -29,7 +29,7 @@
 
 	<groupId>wiki.runescape.oldschool</groupId>
 	<artifactId>osrs-wiki-runelite</artifactId>
-	<version>1.10.36-SNAPSHOT</version>
+	<version>1.11.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>OSRS Wiki Runelite Scripts</name>
