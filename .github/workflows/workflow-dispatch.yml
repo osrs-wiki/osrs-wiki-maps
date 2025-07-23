@@ -2,10 +2,16 @@ name: Generate Maps
 
 on:
   workflow_dispatch:
+    inputs:
+      runner:
+        description: "Runner to use for the job"
+        required: false
+        type: string
+        default: "macos-latest-large"
 
 jobs:
   generate-maps:
-    runs-on: macos-latest-large
+    runs-on: ${{ inputs.runner }}
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
