@@ -48,10 +48,22 @@ jobs:
         run: python scripts/stitch.py
 
       - name: Archive output
-        run: zip -r out.zip ./out
+        run: |
+          # Find the actual output directory (it will be under out/mapgen/versions/{version}/output)
+          OUTPUT_DIR=$(find ./out -path '*/mapgen/versions/*/output' -type d | head -1)
+          if [ -z "$OUTPUT_DIR" ]; then
+            echo "Error: Could not find output directory"
+            exit 1
+          fi
+          echo "Found output directory: $OUTPUT_DIR"
+          # Create zip from within the output directory to avoid nested paths
+          WORKING_DIR="$GITHUB_WORKSPACE"
+          cd "$OUTPUT_DIR"
+          zip -r "$WORKING_DIR/maps-output.zip" .
+          cd "$WORKING_DIR"
 
       - name: Upload output
         uses: actions/upload-artifact@v4
         with:
-          name: out-${{ github.run_id }}-${{ github.run_attempt }}
-          path: out.zip
+          name: maps-output-${{ github.run_id }}-${{ github.run_attempt }}
+          path: maps-output.zip
