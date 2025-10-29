@@ -26,10 +26,10 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
           cache: pip
 
-      - name : Install python dependencies
+      - name: Install python dependencies
         run: pip install -r requirements.txt
 
       - name: Install Maven dependencies
@@ -42,7 +42,7 @@ jobs:
         run: python scripts/cache.py
 
       - name: Generate maps
-        run: java -jar ./osrs-wiki-maps/target/osrs-wiki-maps-*-SNAPSHOT-shaded.jar
+        run: java -jar ./osrs-wiki-maps/target/osrs-wiki-maps-*-shaded.jar
 
       - name: Stitch maps
         run: python scripts/stitch.py
