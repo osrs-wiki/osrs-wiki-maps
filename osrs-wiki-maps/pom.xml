@@ -5,7 +5,7 @@
 	<parent>
 		<artifactId>osrs-wiki-runelite</artifactId>
 		<groupId>wiki.runescape.oldschool</groupId>
-		<version>1.11.24</version>
+		<version>1.12.2</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
