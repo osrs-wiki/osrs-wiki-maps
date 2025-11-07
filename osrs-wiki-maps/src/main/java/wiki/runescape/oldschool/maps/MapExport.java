@@ -36,6 +36,7 @@ import net.runelite.cache.util.XteaKeyManager;
 @Slf4j
 public class MapExport {
     private static RegionLoader regionLoader;
+	private static ObjectManager objectManager;
 	private static String  outputDir;
 
     public static void main(String[] args) throws Exception {
@@ -62,7 +63,7 @@ public class MapExport {
             xteaKeyManager.loadKeys(fin);
         }
 
-		ObjectManager objectManager = new ObjectManager(store);
+		objectManager = new ObjectManager(store);
 		objectManager.load();
 
 		regionLoader = new RegionLoader(store, xteaKeyManager, objectManager);
@@ -113,7 +114,7 @@ public class MapExport {
     }
 
     private static List<WorldMapDefinition> getWorldMapDefinitions(Store store) throws Exception {
-        List<WorldMapDefinition> definitions = new ArrayList<WorldMapDefinition>();
+        List<WorldMapDefinition> definitions = new ArrayList<>();
         WorldMapLoader loader = new WorldMapLoader();
         Index index = store.getIndex(IndexType.WORLDMAP);
 
@@ -131,12 +132,10 @@ public class MapExport {
     }
 
     private static List<MinimapIcon> getMapIcons(Store store) throws Exception {
-        List<MinimapIcon> icons = new ArrayList<MinimapIcon>();
+        List<MinimapIcon> icons = new ArrayList<>();
         SpriteManager spriteManager = new SpriteManager(store);
         spriteManager.load();
-        HashSet<Integer> spriteIds = new HashSet<Integer>();
-        ObjectManager objectManager = new ObjectManager(store);
-        objectManager.load();
+        HashSet<Integer> spriteIds = new HashSet<>();
         AreaManager areaManager = new AreaManager(store);
         areaManager.load();
         WorldMapManager worldMapManager = new WorldMapManager(store);
