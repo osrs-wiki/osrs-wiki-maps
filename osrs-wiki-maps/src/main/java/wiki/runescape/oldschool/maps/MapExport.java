@@ -1,43 +1,49 @@
 package wiki.runescape.oldschool.maps;
 
-import net.runelite.cache.*;
+import com.google.gson.Gson;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
+import javax.imageio.ImageIO;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.cache.AreaManager;
+import net.runelite.cache.IndexType;
+import net.runelite.cache.MapImageDumper;
+import net.runelite.cache.ObjectManager;
+import net.runelite.cache.SpriteManager;
+import net.runelite.cache.WorldMapManager;
 import net.runelite.cache.definitions.AreaDefinition;
 import net.runelite.cache.definitions.ObjectDefinition;
 import net.runelite.cache.definitions.SpriteDefinition;
 import net.runelite.cache.definitions.WorldMapDefinition;
 import net.runelite.cache.definitions.WorldMapElementDefinition;
 import net.runelite.cache.definitions.loaders.WorldMapLoader;
-import net.runelite.cache.fs.*;
+import net.runelite.cache.fs.Archive;
+import net.runelite.cache.fs.ArchiveFiles;
+import net.runelite.cache.fs.FSFile;
+import net.runelite.cache.fs.Index;
+import net.runelite.cache.fs.Storage;
+import net.runelite.cache.fs.Store;
 import net.runelite.cache.region.Location;
 import net.runelite.cache.region.Region;
-import net.runelite.cache.region.RegionLoader;
-
-import com.google.gson.Gson;
 import net.runelite.cache.util.XteaKeyManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.logging.Level;
-
+@Slf4j
 public class MapExport {
     private static RegionLoader regionLoader;
-    private static String version;
-    private static String  outputDir;
+	private static String  outputDir;
 
-    private static final Logger logger = LoggerFactory.getLogger(MapExport.class);
     public static void main(String[] args) throws Exception {
         String versionPath = "./data/versions/version.txt";
         File versionTxt = new File(versionPath);
         Scanner sc = new Scanner(versionTxt);
-        version = sc.next();
-        logger.info("Version: " + version);
+		String version = sc.next();
+        log.info("Version: " + version);
 
         String intermediateDir = String.format("./out/mapgen/versions/%s", version);
         outputDir = String.format("%s/output", intermediateDir);
@@ -47,7 +53,7 @@ public class MapExport {
         String cache = String.format("%s/cache", cacheDir);
         Store store = new Store(new File(cache));
         store.load();
-        logger.info("Cache loaded: " + cache);
+        log.info("Cache loaded: " + cache);
 
         String xteas = String.format("%s/xteas.json", cacheDir);
         XteaKeyManager xteaKeyManager = new XteaKeyManager();
@@ -56,13 +62,18 @@ public class MapExport {
             xteaKeyManager.loadKeys(fin);
         }
 
-        MapImageDumper dumper = new MapImageDumper(store, xteaKeyManager);
-        dumper.setRenderIcons(false);
-        dumper.setRenderLabels(false);
-        dumper.setLowMemory(false);
-        dumper.load();
-        regionLoader = new RegionLoader(store, xteaKeyManager);
-        regionLoader.loadRegions();
+		ObjectManager objectManager = new ObjectManager(store);
+		objectManager.load();
+
+		regionLoader = new RegionLoader(store, xteaKeyManager, objectManager);
+		regionLoader.loadRegions();
+
+		MapImageDumper dumper = new MapImageDumper(store, regionLoader);
+		dumper.setRenderIcons(false);
+		dumper.setRenderLabels(false);
+		dumper.setLowMemory(false);
+		dumper.load();
+
         for (Region region : regionLoader.getRegions()) {
             int x = region.getRegionX();
             int y = region.getRegionY();
@@ -74,7 +85,7 @@ public class MapExport {
                 ImageIO.write(reg, "png", outputfile);
             }
         }
-        logger.info("Maps generated for " + regionLoader.getRegions().size() + " regions");
+        log.info("Maps generated for " + regionLoader.getRegions().size() + " regions");
 
         String filename = "minimapIcons.json";
         File outputfile = fileWithDirectoryAssurance(intermediateDir, filename);
@@ -83,7 +94,7 @@ public class MapExport {
         String json = gson.toJson(icons);
         out.write(json);
         out.close();
-        logger.info("Minimap icon definitions generated");
+        log.info("Minimap icon definitions generated");
 
         filename = "worldMapDefinitions.json";
         outputfile = fileWithDirectoryAssurance(intermediateDir, filename);
@@ -92,7 +103,7 @@ public class MapExport {
         json = gson.toJson(definitions);
         out.write(json);
         out.close();
-        logger.info("World map definitions generated");
+        log.info("World map definitions generated");
     }
 
     private static File fileWithDirectoryAssurance(String directory, String filename) {
