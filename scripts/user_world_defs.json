@@ -1,19 +1,5 @@
 [
     {
-        "name": "Gielinor Surface (overwrite regions)",
-        "regionList": [
-            {
-                "numberOfPlanes": 4,
-                "plane": 0,
-                "xLow": 16,
-                "xHigh": 61,
-                "yLow": 39,
-                "yHigh": 64
-            }
-        ],
-        "fileId": 0
-    },
-    {
         "name": "Fremennik Slayer Cave (overwrite regions)",
         "field450": 0,
         "defaultZoom": 200,
@@ -237,20 +223,6 @@
         "fileId": 10001
     },
     {
-        "name": "Abandoned Mine - Level 3",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 70,
-                "xHigh": 42,
-                "xLow": 42,
-                "yLow": 70
-            }
-        ],
-        "fileId": 10002
-    },
-    {
         "name": "Abandoned Mine - Level 4",
         "regionList": [
             {
@@ -263,20 +235,6 @@
             }
         ],
         "fileId": 10003
-    },
-    {
-        "name": "Abandoned Mine - Level 5",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 69,
-                "xHigh": 42,
-                "xLow": 42,
-                "yLow": 69
-            }
-        ],
-        "fileId": 10004
     },
     {
         "name": "Abandoned Mine - Level 6",
@@ -383,20 +341,6 @@
         "fileId": 10008
     },
     {
-        "name": "Air altar",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 75,
-                "xHigh": 44,
-                "xLow": 44,
-                "yLow": 75
-            }
-        ],
-        "fileId": 10009
-    },
-    {
         "name": "Airship platform",
         "regionList": [
             {
@@ -409,64 +353,6 @@
             }
         ],
         "fileId": 10010
-    },
-    {
-        "name": "Ancient Cavern (unlit)",
-        "regionList": [
-            {
-                "numberOfPlanes": 2,
-                "plane": 0,
-                "yHigh": 83,
-                "xHigh": 25,
-                "xLow": 25,
-                "yLow": 83
-            },
-            {
-                "numberOfPlanes": 2,
-                "plane": 0,
-                "yHigh": 82,
-                "xHigh": 25,
-                "xLow": 25,
-                "yLow": 82
-            }
-        ],
-        "fileId": 10011
-    },
-    {
-        "name": "Ancient Cavern lighting area",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 76,
-                "xHigh": 24,
-                "xLow": 24,
-                "yLow": 76
-            }
-        ],
-        "fileId": 10012
-    },
-    {
-        "name": "Another Slice of H.A.M. Sigmund fight area",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 86,
-                "xHigh": 39,
-                "xLow": 39,
-                "yLow": 86
-            },
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 87,
-                "xHigh": 39,
-                "xLow": 39,
-                "yLow": 87
-            }
-        ],
-        "fileId": 10013
     },
     {
         "name": "Ape Atoll Dungeon",
@@ -489,48 +375,6 @@
             }
         ],
         "fileId": 10014
-    },
-    {
-        "name": "Ardougne (Song of the Elves)",
-        "regionList": [
-            {
-                "numberOfPlanes": 4,
-                "plane": 0,
-                "yHigh": 92,
-                "xHigh": 52,
-                "xLow": 52,
-                "yLow": 92
-            }
-        ],
-        "fileId": 10015
-    },
-    {
-        "name": "Ardougne Sewer (Plague City)",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 152,
-                "xHigh": 39,
-                "xLow": 39,
-                "yLow": 152
-            }
-        ],
-        "fileId": 10016
-    },
-    {
-        "name": "Baba Yaga's house",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 72,
-                "xHigh": 38,
-                "xLow": 38,
-                "yLow": 72
-            }
-        ],
-        "fileId": 10017
     },
     {
         "name": "Banana plantation (Ape Atoll)",
@@ -625,20 +469,6 @@
         "fileId": 10023
     },
     {
-        "name": "Bouncer's Cave",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 73,
-                "xHigh": 27,
-                "xLow": 27,
-                "yLow": 73
-            }
-        ],
-        "fileId": 10024
-    },
-    {
         "name": "Brimhaven Agility Arena",
         "regionList": [
             {
@@ -695,20 +525,6 @@
         "fileId": 10028
     },
     {
-        "name": "Cabin Fever boats",
-        "regionList": [
-            {
-                "numberOfPlanes": 2,
-                "plane": 0,
-                "yHigh": 75,
-                "xHigh": 28,
-                "xLow": 28,
-                "yLow": 75
-            }
-        ],
-        "fileId": 10029
-    },
-    {
         "name": "Cerberus's Lair",
         "regionList": [
             {
@@ -753,20 +569,6 @@
         "fileId": 10031
     },
     {
-        "name": "Cosmic altar",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 75,
-                "xHigh": 33,
-                "xLow": 33,
-                "yLow": 75
-            }
-        ],
-        "fileId": 10032
-    },
-    {
         "name": "Cosmic entity's plane",
         "regionList": [
             {
@@ -779,20 +581,6 @@
             }
         ],
         "fileId": 10033
-    },
-    {
-        "name": "Courtroom",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 66,
-                "xHigh": 28,
-                "xLow": 28,
-                "yLow": 66
-            }
-        ],
-        "fileId": 10034
     },
     {
         "name": "Crandor Lab",
@@ -915,20 +703,6 @@
         "fileId": 10042
     },
     {
-        "name": "Digsite Dungeon (rocks intact)",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 0,
-                "yHigh": 153,
-                "xHigh": 52,
-                "xLow": 52,
-                "yLow": 153
-            }
-        ],
-        "fileId": 10043
-    },
-    {
         "name": "Dondakan's mine (during quest)",
         "regionList": [
             {
@@ -965,20 +739,6 @@
         "fileId": 10045
     },
     {
-        "name": "Dragon Slayer boats",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 1,
-                "yHigh": 86,
-                "xHigh": 32,
-                "xLow": 32,
-                "yLow": 86
-            }
-        ],
-        "fileId": 10046
-    },
-    {
         "name": "Dream World - challenges",
         "regionList": [
             {
@@ -1007,20 +767,6 @@
         "fileId": 10048
     },
     {
-        "name": "Dream World - Me",
-        "regionList": [
-            {
-                "numberOfPlanes": 1,
-                "plane": 2,
-                "yHigh": 79,
-                "xHigh": 28,
-                "xLow": 28,
-                "yLow": 79
-            }
-        ],
-        "fileId": 10049
-    },
-    {
         "name": "Drill Demon",
         "regionList": [
             {
@@ -1033,20 +779,6 @@
             }
         ],
         "fileId": 10050
-    },
-    {
-        "name": "Eadgar's cave",
-        "regionList": [
-            {
-                "numberOfPlanes": 3,
-                "plane": 0,
-                "yHigh": 157,
-                "xHigh": 45,
-                "xLow": 45,
-                "yLow": 157
-            }
-        ],
-        "fileId": 10051
     },
     {
         "name": "Eagles' Peak Dungeon",
