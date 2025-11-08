@@ -24,12 +24,10 @@ public class RegionLoader extends net.runelite.cache.region.RegionLoader
 {
 	private static final int MAX_REGION = 32768;
 
-	private static final int _MIN_REGION_OVERWORLD = 3872;
-	private static final int _MAX_REGION_OVERWORLD = 15937;
-	private static final int MIN_REGION_OVERWORLD_X = _MIN_REGION_OVERWORLD >> 8;
-	private static final int MAX_REGION_OVERWORLD_X = _MAX_REGION_OVERWORLD >> 8;
-	private static final int MIN_REGION_OVERWORLD_Y = _MIN_REGION_OVERWORLD & 0xFF;
-	private static final int MAX_REGION_OVERWORLD_Y = _MAX_REGION_OVERWORLD & 0xFF;
+	private static final int MIN_REGION_OVERWORLD_X = 15;
+	private static final int MIN_REGION_OVERWORLD_Y = 32;
+	private static final int MAX_REGION_OVERWORLD_X = 62;
+	private static final int MAX_REGION_OVERWORLD_Y = 65;
 
 	private final Store store;
 	private final Index indexWorldmap;
