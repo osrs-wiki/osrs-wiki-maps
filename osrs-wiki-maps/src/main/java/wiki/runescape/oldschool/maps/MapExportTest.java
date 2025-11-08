@@ -61,9 +61,13 @@ public class MapExportTest
 		}
 	}
 
-	private static File fileWithDirectoryAssurance(String directory, String filename) {
+	private static File fileWithDirectoryAssurance(String directory, String filename)
+	{
 		File dir = new File(directory);
-		if (!dir.exists()) dir.mkdirs();
+		if (!dir.exists())
+		{
+			dir.mkdirs();
+		}
 		return new File(directory + "/" + filename);
 	}
 }

@@ -118,7 +118,7 @@ public class RegionLoader extends net.runelite.cache.region.RegionLoader
 		log.info("Loaded {} total regions", seenRegions.size());
 	}
 
-	public MapDefinition loadMapDefinition(int regionId, Storage storage) throws IOException
+	private MapDefinition loadMapDefinition(int regionId, Storage storage) throws IOException
 	{
 		int x = regionId >> 8;
 		int y = regionId & 0xFF;
@@ -134,7 +134,7 @@ public class RegionLoader extends net.runelite.cache.region.RegionLoader
 		return new MapLoader().load(x, y, mapData);
 	}
 
-	public LocationsDefinition loadLocationDefinitionOverworld(int regionId, Storage storage, InputStream worldmapBuffer) throws IOException
+	private LocationsDefinition loadLocationDefinitionOverworld(int regionId, Storage storage, InputStream worldmapBuffer) throws IOException
 	{
 		int x = regionId >> 8;
 		int y = regionId & 0xFF;
@@ -167,7 +167,7 @@ public class RegionLoader extends net.runelite.cache.region.RegionLoader
 		return locDef;
 	}
 
-	public LocationsDefinition loadLocationDefinitionSimple(int regionId, Storage storage) throws IOException
+	private LocationsDefinition loadLocationDefinitionSimple(int regionId, Storage storage) throws IOException
 	{
 		int x = regionId >> 8;
 		int y = regionId & 0xFF;

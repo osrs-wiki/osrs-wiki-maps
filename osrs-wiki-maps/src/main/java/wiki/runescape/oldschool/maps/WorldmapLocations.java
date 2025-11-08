@@ -30,10 +30,14 @@ public class WorldmapLocations
 	private static List<Location> unpackColumn(int x, int y, InputStream buffer)
 	{
 		int settings = buffer.readUnsignedByte();
-		if (settings != 0) {
-			if ((settings & 1) != 0) {
+		if (settings != 0)
+		{
+			if ((settings & 1) != 0)
+			{
 				unpackColumnSimple(x, y, buffer, settings);
-			} else {
+			}
+			else
+			{
 				return unpackColumnComplex(x, y, buffer, settings);
 			}
 		}
@@ -43,7 +47,8 @@ public class WorldmapLocations
 	private static void unpackColumnSimple(int x, int y, InputStream buffer, int settings)
 	{
 		boolean hasOverlay = (settings & HAS_OVERLAY) != 0;
-		if (hasOverlay) {
+		if (hasOverlay)
+		{
 			buffer.readUnsignedShort();
 			// overlays[0][x][y] = (short) buffer.readUnsignedShort();
 		}
